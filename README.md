@@ -9,7 +9,7 @@
 
 ---
 
-## Vision
+## &#x1F441;&#xFE0F; Vision
 
 Most AI assistants today live behind isolated browser tabs or corporate walls. They can chat, but they cannot see what you see, touch your desktop, or act autonomously inside your daily workflow without exorbitant cloud bills or latency lag.
 
@@ -20,7 +20,7 @@ Most AI assistants today live behind isolated browser tabs or corporate walls. T
 
 ---
 
-## Key Features
+## &#x2728; Key Features
 
 ### Digital Eyes: Vision & Local OCR
 - Real-time window inspection and screen analysis.
@@ -48,7 +48,7 @@ Most AI assistants today live behind isolated browser tabs or corporate walls. T
 
 ---
 
-## Architecture: "Cloud Reasoning + Local Body"
+## &#x1F3D7;&#xFE0F; Architecture: "Cloud Reasoning + Local Body"
 
 CLIO implements an asymmetric control loop designed for speed, safety, and frugality:
 
@@ -94,7 +94,7 @@ CLIO implements an asymmetric control loop designed for speed, safety, and fruga
 
 ---
 
-## Hardware Requirements
+## &#x1F4BB; Hardware Requirements
 
 You do **not** need a multi-thousand-dollar workstation to run CLIO. Because heavy cognitive loads can be offloaded to cloud endpoints while local agents remain lightweight:
 
@@ -110,7 +110,7 @@ You do **not** need a multi-thousand-dollar workstation to run CLIO. Because hea
 
 ---
 
-## Quickstart & Installation
+## &#x1F680; Quickstart & Installation
 
 ### 1. Clone the Repository
 ```bash
@@ -157,7 +157,7 @@ python run_clio.py
 
 ---
 
-## Roadmap & Call for Contributors & Investors
+## &#x1F5FA;&#xFE0F; Roadmap & Call for Contributors & Investors
 
 We are building the future of **sovereign, local-first artificial personal intelligence** a digital companion that respects user privacy, costs almost nothing at idle, and interacts with software tools just like a human does.
 
@@ -173,7 +173,7 @@ If you are passionate about local AI autonomy, deterministic safety planes, and 
 
 ---
 
-## License
+## &#x1F4C4; License
 
 This project is licensed under the terms of the [MIT License](LICENSE).
 Distributed freely for the community to study, hack, and expand.
