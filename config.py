@@ -52,7 +52,7 @@ GROQ_GENERAL_MODEL = os.getenv("GROQ_GENERAL_MODEL", "qwen/qwen3.8-27b")
 # La chiave API di Groq (Llama 3 Uncensored)
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")  # Il tuo Telegram User ID (per sicurezza: Jarvis risponde SOLO a te)
 # Per trovarlo, manda un messaggio a @userinfobot su Telegram
-MY_TELEGRAM_USER_ID = 770278430  # Esempio: 123456789
+MY_TELEGRAM_USER_ID = int(os.getenv('MY_TELEGRAM_USER_ID', '0'))  # Esempio: 123456789
 
 # --- Impostazioni voce ---
 # Se True, Jarvis risponde anche con un messaggio vocale
@@ -170,7 +170,7 @@ DEVICE_IP = "192.168.1.18"
 ALLOWED_IPS = ["127.0.0.1", "localhost", "::1"]
 
 # Percorso completo dell'eseguibile ADB (Android Debug Bridge)
-ADB_PATH = r"C:\Users\User\AppData\Local\Microsoft\WinGet\Packages\Google.PlatformTools_Microsoft.Winget.Source_8wekyb3d8bbwe\platform-tools\adb.exe"
+ADB_PATH = os.getenv('ADB_PATH', shutil.which('adb') or 'adb')
 
 # ADB_EXEC: usa il PATH di sistema se disponibile, altrimenti fallback su ADB_PATH
 import shutil as _shutil

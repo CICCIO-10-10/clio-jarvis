@@ -139,7 +139,7 @@ def log_clio_action(action: str, params: Any, success: bool, outcome: str = ""):
         try:
             from clio_core import VAULT_DIR
         except Exception:
-            VAULT_DIR = r"C:\Users\User\OneDrive\OneSyncFiles"
+            VAULT_DIR = r"os.path.expanduser("~")\OneDrive\OneSyncFiles"
         log_dir = os.path.join(VAULT_DIR, "Sistema")
         os.makedirs(log_dir, exist_ok=True)
         log_file = os.path.join(log_dir, "Clio_Log.md")
@@ -190,8 +190,8 @@ TOOLS_METADATA = {
     "genera_immagine_pollinations": {"desc": "Genera un'immagine raster tramite Pollinations da un prompt artistico e la salva/apre. Invia solo dettagli necessari all'immagine, mai screenshot o dati personali. Esempio: {\"action\":\"genera_immagine_pollinations\",\"params\":{\"prompt\":\"Razzo stilizzato in un cielo stellato, colori vivaci\"}}", "params": ["prompt"]},
     "run_python_code":        {"desc": "Esegue codice Python reale tramite exec() e restituisce l'output o errore. Esempio: {\"action\": \"run_python_code\", \"params\": {\"code_string\": \"print(2+2)\"}}", "params": ["code_string"]},
     "deep_web_research":      {"desc": "Ricerca web approfondita con browser headless: legge le prime 3 pagine e sintetizza con Gemini. Usa per 'cerca su internet', 'notizie', 'fai una ricerca'. Esempio: {\"action\": \"deep_web_research\", \"params\": {\"query\": \"ultime notizie IA\"}}", "params": ["query"]},
-    "organize_folder":        {"desc": "Organizza e ordina i file di una cartella in sottocartelle (Immagini, Documenti, Video, ecc.). Esempio: {\"action\": \"organize_folder\", \"params\": {\"folder_path\": \"C:\\Users\\User\\Desktop\"}}", "params": ["folder_path"]},
-    "find_files":             {"desc": "Cerca file per estensione (.pdf, .png, ecc.) in una cartella o sul Desktop. Esempio: {\"action\": \"find_files\", \"params\": {\"extension\": \"pdf\", \"folder_path\": \"C:\\Users\\User\\Desktop\"}}", "params": ["extension", "folder_path"]},
+    "organize_folder":        {"desc": "Organizza e ordina i file di una cartella in sottocartelle (Immagini, Documenti, Video, ecc.). Esempio: {\"action\": \"organize_folder\", \"params\": {\"folder_path\": \"os.path.expanduser("~")\\Desktop\"}}", "params": ["folder_path"]},
+    "find_files":             {"desc": "Cerca file per estensione (.pdf, .png, ecc.) in una cartella o sul Desktop. Esempio: {\"action\": \"find_files\", \"params\": {\"extension\": \"pdf\", \"folder_path\": \"os.path.expanduser("~")\\Desktop\"}}", "params": ["extension", "folder_path"]},
     "move_file":              {"desc": "Sposta un file da sorgente a destinazione con controllo di sicurezza. Esempio: {\"action\": \"move_file\", \"params\": {\"source\": \"file.txt\", \"destination\": \"C:\\Destinazione\\file.txt\"}}", "params": ["source", "destination"]},
     "check_emails":           {"desc": "Legge le ultime email da Gmail e le riassume per la risposta vocale. Esempio: {\"action\": \"check_emails\", \"params\": {}}", "params": []},
     # ── APP & BROWSER ──

@@ -2,7 +2,7 @@
 CLIO - vault_watcher.py
 Sincronizzazione Continua in Tempo Reale tra Obsidian Vault e Clio AI.
 
-Monitora la cartella del Vault Obsidian (C:\\Users\\User\\OneDrive\\OneSyncFiles).
+Monitora la cartella del Vault Obsidian (os.path.expanduser("~")\\OneDrive\\OneSyncFiles).
 Quando un file Markdown (.md) viene creato, modificato, eliminato o rinominato:
 1. Invalida immediatamente la cache delle risposte (_RESPONSE_CACHE) di jarvis_brain.py.
 2. Invalida la cache dei file del vault (_VAULT_FILE_CACHE) in clio_core.py.
@@ -45,9 +45,9 @@ TIMESTAMP_FILE = os.path.join(DATA_DIR, "vault_invalidated.timestamp")
 # Determina percorso del Vault
 try:
     import config
-    VAULT_DIR = getattr(config, "VAULT_DIR", r"C:\Users\User\OneDrive\OneSyncFiles")
+    VAULT_DIR = getattr(config, "VAULT_DIR", r"os.path.expanduser("~")\OneDrive\OneSyncFiles")
 except Exception:
-    VAULT_DIR = r"C:\Users\User\OneDrive\OneSyncFiles"
+    VAULT_DIR = r"os.path.expanduser("~")\OneDrive\OneSyncFiles"
 
 # Cartelle da ignorare (file interni di sistema o cartelle temporanee)
 IGNORED_DIRS = {".obsidian", ".git", ".trash", ".copilot", ".pytest_cache", "__pycache__"}

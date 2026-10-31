@@ -38,10 +38,10 @@ if SCRIPT_DIR not in sys.path:
 
 try:
     import config
-    VAULT_DIR = getattr(config, "VAULT_DIR", r"C:\Users\User\OneDrive\OneSyncFiles")
+    VAULT_DIR = getattr(config, "VAULT_DIR", r"os.path.expanduser("~")\OneDrive\OneSyncFiles")
     GEMINI_API_KEY = getattr(config, "GEMINI_API_KEY", "")
 except Exception:
-    VAULT_DIR = r"C:\Users\User\OneDrive\OneSyncFiles"
+    VAULT_DIR = r"os.path.expanduser("~")\OneDrive\OneSyncFiles"
     GEMINI_API_KEY = ""
 
 
@@ -137,7 +137,7 @@ def get_vault_recent_files(folders=("Inbox", "Progetti"), hours: int = 24, max_f
 
 def get_social_status() -> str:
     """Esegue social_memory.py --status per leggere lo stato social."""
-    social_script = r"C:\Users\User\Desktop\AUTOMAZIONI\social_memory.py"
+    social_script = r"os.path.expanduser("~")\Desktop\AUTOMAZIONI\social_memory.py"
     if not os.path.exists(social_script):
         return "Script social_memory.py non trovato."
 

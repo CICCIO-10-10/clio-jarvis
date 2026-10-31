@@ -827,7 +827,7 @@ def esegui_comando_adb(comando: str) -> str:
         try:
             from config import ADB_EXEC as adb_path
         except:
-            adb_path = r"C:\Users\User\AppData\Local\Microsoft\WinGet\Packages\Google.PlatformTools_Microsoft.Winget.Source_8wekyb3d8bbwe\platform-tools\adb.exe"
+            adb_path = r"os.path.expanduser("~")\AppData\Local\Microsoft\WinGet\Packages\Google.PlatformTools_Microsoft.Winget.Source_8wekyb3d8bbwe\platform-tools\adb.exe"
             
         full_cmd = f'"{adb_path}" {comando}'
         result = subprocess.run(full_cmd, shell=True, capture_output=True, text=True)
@@ -897,7 +897,7 @@ def telefono_screenshot() -> str:
     try:
         from clio_core import ADB_EXEC as adb_path
     except:
-        adb_path = r"C:\Users\User\AppData\Local\Microsoft\WinGet\Packages\Google.PlatformTools_Microsoft.Winget.Source_8wekyb3d8bbwe\platform-tools\adb.exe"
+        adb_path = r"os.path.expanduser("~")\AppData\Local\Microsoft\WinGet\Packages\Google.PlatformTools_Microsoft.Winget.Source_8wekyb3d8bbwe\platform-tools\adb.exe"
         
     import subprocess
     subprocess.run(f'"{adb_path}" pull /sdcard/screen.png telefono_screenshot.png', shell=True)

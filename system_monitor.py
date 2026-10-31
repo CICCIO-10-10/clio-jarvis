@@ -170,8 +170,8 @@ def install_startup_shortcut():
             os.makedirs(startup_dir, exist_ok=True)
 
         bat_content = f"""@echo off
-set SCRIPT=C:\\Users\\User\\Desktop\\PROGETTI\\clio\\system_monitor.py
-set PYTHONW=C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\pythonw.exe
+set SCRIPT=%USERPROFILE%\\Desktop\\PROGETTI\\clio\\system_monitor.py
+set PYTHONW=%USERPROFILE%\\AppData\\Local\\Programs\\Python\\Python312\\pythonw.exe
 if not exist "%PYTHONW%" set PYTHONW=pythonw.exe
 start "" "%PYTHONW%" "%SCRIPT%"
 exit

@@ -53,8 +53,8 @@ def sessione_popolata(sessione):
     idea.add_decisione(sessione.idea_id, "Uso il blu come colore principale")
     idea.add_decisione(sessione.idea_id, "Il titolo va in altro a sinistra")
     idea.set_prossimo_passo(sessione.idea_id, "abbozzare la tipografia")
-    idea.add_materiale(sessione.idea_id, r"C:\Users\User\Desktop\bozza.png")
-    idea.add_materiale(sessione.idea_id, r"C:\Users\User\Desktop\palette.md")
+    idea.add_materiale(sessione.idea_id, r"os.path.expanduser("~")\Desktop\bozza.png")
+    idea.add_materiale(sessione.idea_id, r"os.path.expanduser("~")\Desktop\palette.md")
     idea.set_blocco_corrente(sessione.idea_id, "manca il logo del gruppo")
     return idea.load_idea_session(sessione.idea_id)
 
@@ -284,8 +284,8 @@ def test_get_resume_idea_su_idea_popolata(sessione_popolata):
     assert resume["blocco"] == "manca il logo del gruppo"
     assert [d["testo"] for d in resume["decisioni"]] == [
         "Uso il blu come colore principale", "Il titolo va in altro a sinistra"]
-    assert resume["materiali"] == [r"C:\Users\User\Desktop\bozza.png",
-                                   r"C:\Users\User\Desktop\palette.md"]
+    assert resume["materiali"] == [r"os.path.expanduser("~")\Desktop\bozza.png",
+                                   r"os.path.expanduser("~")\Desktop\palette.md"]
     assert resume["ultima_verifica"].endswith("Z")
     assert resume["trovata"] is True
 

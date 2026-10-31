@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-DEFAULT_VAULT_DIR = r"C:\Users\User\OneDrive\OneSyncFiles"
+DEFAULT_VAULT_DIR = r"os.path.expanduser("~")\OneDrive\OneSyncFiles"
 PIPELINE_STATUS_NAME = ".pipeline_status.json"
 
 

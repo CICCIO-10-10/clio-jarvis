@@ -466,7 +466,7 @@ def salva_impostazioni():
 #  VAULT OBSIDIAN — indice leggero + retrieval mirato
 #  (non si legge mai tutto il vault: solo indice + pochi file rilevanti)
 # ══════════════════════════════════════════════════════════════
-VAULT_DIR = r"C:\Users\User\OneDrive\OneSyncFiles"
+VAULT_DIR = r"os.path.expanduser("~")\OneDrive\OneSyncFiles"
 VAULT_INDEX_FILE = os.path.join(BASE_DIR, "data", "vault_index.json")
 
 VAULT_INDEX = []                 # [{rel, title, excerpt, mtime, size}] — indice leggero

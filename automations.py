@@ -27,9 +27,9 @@ from pathlib import Path
 logger = logging.getLogger("Automations")
 
 # ── Percorsi ────────────────────────────────────────────────────────────────
-VAULT = Path(r"C:\Users\User\OneDrive\OneSyncFiles")
+VAULT = Path(r"os.path.expanduser("~")\OneDrive\OneSyncFiles")
 DOC_PATH = VAULT / "CLIO_AUTOMAZIONI.md"
-AUTOM = Path(r"C:\Users\User\Desktop\AUTOMAZIONI")
+AUTOM = Path(r"os.path.expanduser("~")\Desktop\AUTOMAZIONI")
 LOCAL = AUTOM / "local_automations"
 
 DEFAULT_TIMEOUT = int(os.getenv("CLIO_AUTOMATIONS_TIMEOUT", "60"))
