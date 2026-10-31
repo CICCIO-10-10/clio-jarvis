@@ -1,4 +1,4 @@
-# CLIO — Local-First Autonomous AI Assistant
+﻿# CLIO â€” Local-First Autonomous AI Assistant
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg)](https://www.python.org/)
@@ -9,7 +9,7 @@
 
 ---
 
-## 🌟 Vision
+## ðŸŒŸ Vision
 
 Most AI assistants today live behind isolated browser tabs or corporate walls. They can chat, but they cannot see what you see, touch your desktop, or act autonomously inside your daily workflow without exorbitant cloud bills or latency lag.
 
@@ -20,71 +20,71 @@ Most AI assistants today live behind isolated browser tabs or corporate walls. T
 
 ---
 
-## ⚡ Key Features
+## âš¡ Key Features
 
-### 👁️ Digital Eyes: Vision & Local OCR
+### ðŸ‘ï¸ Digital Eyes: Vision & Local OCR
 - Real-time window inspection and screen analysis.
 - Privacy-preserving on-device OCR and lightweight visual parsing without uploading unnecessary personal telemetry to third parties.
 
-### 🖐️ Desktop Computer Use: Native UI Automation
+### ðŸ–ï¸ Desktop Computer Use: Native UI Automation
 - Seamless operating system control powered by `PyAutoGUI` and native system hooks.
 - Mouse movement, keyboard typing, window focus management, and application launching with deterministic safety constraints.
 
-### 🎨 3D Procedural Generation: Blender Automation
+### ðŸŽ¨ 3D Procedural Generation: Blender Automation
 - Direct integration with **Blender** headless or GUI workflows.
 - Synthesize 3D assets, execute procedural Python geometry scripts, and inspect renderings dynamically from natural language instructions.
 
-### 🧠 Persistent Episodic Memory: The Scribe
+### ðŸ§  Persistent Episodic Memory: The Scribe
 - Long-term memory and workspace synchronization powered by **The Scribe**.
 - Stores project decisions, context shifts, and previous executions so CLIO recalls context across days without resetting conversations.
 
-### 🔀 Intelligent Hybrid Model Router
+### ðŸ”€ Intelligent Hybrid Model Router
 - **Fast Local Commands:** Low-latency local inferences handled by **Ollama** (e.g., Llama 3.2, Qwen Coder) directly on your GPU/CPU.
 - **Complex Planning & Vision:** High-capacity cloud reasoning (Gemini, DeepSeek, Groq) triggered only when deep contextual comprehension is required.
 
-### 🛡️ Cost Guard & Hardened Control Plane (`policy.py`)
+### ðŸ›¡ï¸ Cost Guard & Hardened Control Plane (`policy.py`)
 - Real-time token budget tracking and rate-limiting.
 - Strict policy enforcement: prevents prompt-injection escapes, unauthorized system deletions, recursive command loops, and surprise API bills.
 
 ---
 
-## 🏗️ Architecture: "Cloud Reasoning + Local Body"
+## ðŸ—ï¸ Architecture: "Cloud Reasoning + Local Body"
 
 CLIO implements an asymmetric control loop designed for speed, safety, and frugality:
 
 ```
-                  ┌──────────────────────────────────────────────┐
-                  │                USER INTENT                   │
-                  │        (Voice, Chat, System Event)           │
-                  └──────────────────────┬───────────────────────┘
-                                         │
-                                         ▼
-                  ┌──────────────────────────────────────────────┐
-                  │                 MODEL ROUTER                 │
-                  │   Evaluates complexity, latency & privacy    │
-                  └──────────────┬────────────────┬──────────────┘
-                                 │                │
-            [Complex / Vision]   │                │   [Fast / System]
-                                 ▼                ▼
-                     ┌────────────────┐     ┌────────────────┐
-                     │   Cloud LLM    │     │  Local Ollama  │
-                     │ Gemini/DeepSeek│     │  Llama / Qwen  │
-                     └────────┬───────┘     └────────┬───────┘
-                              │                      │
-                              └──────────┬───────────┘
-                                         ▼
-                  ┌──────────────────────────────────────────────┐
-                  │         CONTROL PLANE (`policy.py`)          │
-                  │  Cost Guard · Safety Bounds · Action Auth    │
-                  └──────────────────────┬───────────────────────┘
-                                         │  (Approved Actions Only)
-                                         ▼
-                  ┌──────────────────────────────────────────────┐
-                  │              LOCAL SKILL ENGINE              │
-                  ├──────────────────────┬───────────────────────┤
-                  │  🖥️ Computer Use     │  🎨 Blender 3D        │
-                  │  👁️ Local Vision/OCR │  📚 The Scribe Memory │
-                  └──────────────────────────────────────────────┘
+                  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                  â”‚                USER INTENT                   â”‚
+                  â”‚        (Voice, Chat, System Event)           â”‚
+                  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                         â”‚
+                                         â–¼
+                  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                  â”‚                 MODEL ROUTER                 â”‚
+                  â”‚   Evaluates complexity, latency & privacy    â”‚
+                  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                 â”‚                â”‚
+            [Complex / Vision]   â”‚                â”‚   [Fast / System]
+                                 â–¼                â–¼
+                     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                     â”‚   Cloud LLM    â”‚     â”‚  Local Ollama  â”‚
+                     â”‚ Gemini/DeepSeekâ”‚     â”‚  Llama / Qwen  â”‚
+                     â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜     â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜
+                              â”‚                      â”‚
+                              â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                         â–¼
+                  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                  â”‚         CONTROL PLANE (`policy.py`)          â”‚
+                  â”‚  Cost Guard Â· Safety Bounds Â· Action Auth    â”‚
+                  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                         â”‚  (Approved Actions Only)
+                                         â–¼
+                  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                  â”‚              LOCAL SKILL ENGINE              â”‚
+                  â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+                  â”‚  ðŸ–¥ï¸ Computer Use     â”‚  ðŸŽ¨ Blender 3D        â”‚
+                  â”‚  ðŸ‘ï¸ Local Vision/OCR â”‚  ðŸ“š The Scribe Memory â”‚
+                  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 1. **Intake & Routing:** Prompts pass to the Model Router. Trivial commands never leave your machine; complex tasks route through secure cloud providers.
@@ -94,7 +94,7 @@ CLIO implements an asymmetric control loop designed for speed, safety, and fruga
 
 ---
 
-## 💻 Hardware Requirements
+## ðŸ’» Hardware Requirements
 
 You do **not** need a multi-thousand-dollar workstation to run CLIO. Because heavy cognitive loads can be offloaded to cloud endpoints while local agents remain lightweight:
 
@@ -110,7 +110,7 @@ You do **not** need a multi-thousand-dollar workstation to run CLIO. Because hea
 
 ---
 
-## 🚀 Quickstart & Installation
+## ðŸš€ Quickstart & Installation
 
 ### 1. Clone the Repository
 ```bash
@@ -157,23 +157,24 @@ python run_clio.py
 
 ---
 
-## 🤝 Roadmap & Call for Contributors & Investors
+## ðŸ¤ Roadmap & Call for Contributors & Investors
 
-We are building the future of **sovereign, local-first artificial personal intelligence** — a digital companion that respects user privacy, costs almost nothing at idle, and interacts with software tools just like a human does.
+We are building the future of **sovereign, local-first artificial personal intelligence** â€” a digital companion that respects user privacy, costs almost nothing at idle, and interacts with software tools just like a human does.
 
 ### We are actively looking for:
-- 🛠️ **Open Source Contributors:** Help us expand native OS toolkits (Linux X11/Wayland & macOS accessibility bridges), refine local OCR accuracy, and build new modular skills.
-- 💡 **AI Researchers & Prompt Engineers:** Optimize sub-3B parameter local models for structured JSON tool-calling and autonomous agent workflows.
-- 🚀 **Designers & Technical Writers:** Elevate our documentation, interface design, and community guides.
-- 💼 **Angel Investors & Sponsors:** Accelerate the transition from experimental laboratory architecture to a battle-tested desktop ecosystem.
+- ðŸ› ï¸ **Open Source Contributors:** Help us expand native OS toolkits (Linux X11/Wayland & macOS accessibility bridges), refine local OCR accuracy, and build new modular skills.
+- ðŸ’¡ **AI Researchers & Prompt Engineers:** Optimize sub-3B parameter local models for structured JSON tool-calling and autonomous agent workflows.
+- ðŸš€ **Designers & Technical Writers:** Elevate our documentation, interface design, and community guides.
+- ðŸ’¼ **Angel Investors & Sponsors:** Accelerate the transition from experimental laboratory architecture to a battle-tested desktop ecosystem.
 
 If you are passionate about local AI autonomy, deterministic safety planes, and agentic workflows:
 - Star the repository and join the discussion in **Discussions / Issues**.
-- Reach out directly to collaborate or support the project: **maintainer@clioproject.org** (or open an issue).
+- Reach out directly to collaborate or support the project: **tyrion.supporto@gmail.com** (or open an issue).
 
 ---
 
-## 📄 License
+## ðŸ“„ License
 
 This project is licensed under the terms of the [MIT License](LICENSE).
 Distributed freely for the community to study, hack, and expand.
+
