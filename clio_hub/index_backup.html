@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C.L.I.O. Hub - Cognitive Symbiosis</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="./clio_logo_official.png">
+    <link rel="apple-touch-icon" href="./clio_logo_official.png">
+    <link rel="stylesheet" href="styles.css?v=1.1">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+    <!-- Mesh Background System -->
+    <div class="mesh-container">
+        <div class="mesh-orb mesh-1"></div>
+        <div class="mesh-orb mesh-2"></div>
+        <div class="mesh-orb mesh-3"></div>
+    </div>
+    <div class="noise-surface"></div>
+
+    <!-- Ghost History Sidebar -->
+    <div class="action-history-ghost" id="ghost-history">
+        <!-- Action items will appear here -->
+    </div>
+
+
+    <main class="viewport">
+        <header class="hero hero-muted">
+            <div class="logo-core" id="clio-logo-container">
+                <div class="neural-pulse"></div>
+                <div class="nav-links">
+                <a href="#control" onclick="scrollToSection('control')">CONTROLLO</a>
+                <a href="#proactive" onclick="scrollToSection('proactive')">IA PROATTIVA</a>
+                <a href="/brain" target="_blank" style="color: #00BFFF; font-weight: bold; border: 1px solid #00BFFF; padding: 5px 10px; border-radius: 5px;">🧠 NEURAL BRAIN</a>
+            </div>
+                <div class="waveform-container" id="neural-visualizer">
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                </div>
+                <img src="clio_logo_official.png?v=2" alt="CLIO Core" id="clio-nexus" onclick="toggleMic()">
+            </div>
+            <div class="title-stack">
+                <h1 class="glitch-text" data-text="CLIO">CLIO</h1>
+                <p class="tagline">Cognitive Link for Idea Optimization</p>
+                <div class="system-badges">
+                    <div id="status-mic" class="badge">
+                        <i data-lucide="mic"></i>
+                        <span class="status-text">MIC: --</span>
+                    </div>
+                    <div id="status-adb" class="badge">
+                        <i data-lucide="smartphone"></i>
+                        <span class="status-text">ADB: --</span>
+                    </div>
+                    <div id="status-vision" class="badge">
+                        <i data-lucide="eye"></i>
+                        <span class="status-text">HAWK EYE: --</span>
+                    </div>
+                    <div id="status-cpu" class="badge">
+                        <i data-lucide="cpu"></i>
+                        <span class="status-text">CPU: --%</span>
+                    </div>
+                    <div id="status-ram" class="badge">
+                        <i data-lucide="memory-stick"></i>
+                        <span class="status-text">RAM: --%</span>
+                    </div>
+                    <a href="/brain" class="badge badge-brain" style="text-decoration: none; cursor: pointer;">
+                        <i data-lucide="brain"></i>
+                        <span class="status-text">NEURAL BRAIN</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+
+        <footer class="conceptual-footer">
+            <div class="acronym-details">
+                <div class="detail-item"><span>C</span>ognitive</div>
+                <div class="detail-item"><span>L</span>ink</div>
+                <div class="detail-item"><span>I</span>dea</div>
+                <div class="detail-item"><span>O</span>ptimization</div>
+            </div>
+            <div class="name-narrative">
+                <p>C.L.I.O. è un framework di simbiosi cognitiva che trascende il concetto di assistente.
+                    Attraverso il sistema 'Occhio di Falco', Clio percepisce il tuo mondo digitale, mentre la sua
+                    Memoria Semantica
+                    apprende ed evolve con te, ricordando non solo parole, ma significati.
+                    Proattiva per natura ma discreta per scelta, Clio riflette e agisce in autonomia per anticipare i
+                    tuoi bisogni,
+                    restando silente e protetta finché la tua intenzione non la richiama all'azione.
+                    Una simbiosi fluida dove il pensiero diventa esecuzione.</p>
+            </div>
+        </footer>
+    </main>
+
+    <!-- INTERACTION DOCK: RESPONSE ABOVE, WRITING BELOW -->
+    <div class="interaction-dock">
+        <!-- Response Area (Clio speaking) -->
+        <!-- Chat History -->
+        <div class="chat-history" id="chat-history"></div>
+
+        <!-- Response Area -->
+        <div class="speech-overlay" id="speech-box">
+            <div class="speech-header">
+                <span class="clio-indicator">CLIO RISPONDE</span>
+                <div style="display:flex; gap:8px;">
+                    <button class="skip-btn" onclick="pinRisposta()" title="Salva risposta">
+                        <i data-lucide="pin"></i>
+                    </button>
+                    <button class="skip-btn" onclick="stopSpeech()">
+                        <i data-lucide="square"></i>
+                        <span>SKIP</span>
+                    </button>
+                </div>
+            </div>
+            <div class="speech-content" id="speech-text"></div>
+        </div>
+
+        <!-- Stable Writing Bar -->
+        <section class="command-center">
+            <div class="input-container">
+                <input type="text" id="clio-command" placeholder="Scrivi un comando per Clio..."
+                    onkeydown="if(event.key==='Enter') inviaComando()">
+                <div class="input-actions">
+                    <input type="file" id="img-upload" accept="image/*" style="display:none" onchange="inviaImmagine(this)">
+                    <button class="action-btn" onclick="document.getElementById('img-upload').click()" title="Invia immagine">
+                        <i data-lucide="image"></i>
+                    </button>
+                    <button class="action-btn mic-btn" onclick="toggleMic()">
+                        <i data-lucide="mic"></i>
+                    </button>
+                    <button onclick="inviaComando()" class="send-btn">
+                        <i data-lucide="send"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <button class="recall-btn" onclick="pinRisposta()" title="Rivedi ultima risposta">
+        <i data-lucide="message-circle"></i>
+    </button>
+
+    <script src="/api/config.js"></script>
+
+    <script>
+        let lastMicState = null;
+        let syncLock = 0;
+        let lastResponse = '';
+
+
+        function addHistoryAction(text) {
+            const ghost = document.getElementById('ghost-history');
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.innerHTML = `<i data-lucide="send"></i><span>${text}</span>`;
+            ghost.appendChild(item);
+            lucide.createIcons();
+            setTimeout(() => item.remove(), 8000);
+        }
+
+        async function aggiornaStati() {
+            try {
+                const response = await fetch('/api/status');
+                const state = await response.json();
+
+                if (JSON.stringify(state) !== JSON.stringify(window.lastState)) {
+                    console.log("🔄 State Sync:", state);
+                }
+
+                // Registrazione Service Worker per PWA
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('service-worker.js')
+                        .then(() => console.log('Clio Hub SW Registered'))
+                        .catch(err => console.log('SW Error:', err));
+                }
+
+                const body = document.body;
+                const hero = document.querySelector('.hero');
+                const footer = document.querySelector('.conceptual-footer');
+                const adbBadge = document.getElementById('status-adb');
+                const visionBadge = document.getElementById('status-vision');
+
+                // Update ADB Status
+                if (adbBadge) {
+                    const adbStatus = state.adb || 'disconnected';
+                    const adbText = adbBadge.querySelector('.status-text');
+                    adbBadge.className = `badge badge-${adbStatus}`;
+                    adbText.innerText = `ADB: ${adbStatus.toUpperCase()}`;
+                }
+
+                // Update Vision Status
+                if (visionBadge) {
+                    const visionStatus = state.vision || 'inactive';
+                    const visionText = visionBadge.querySelector('.status-text');
+                    visionBadge.className = `badge badge-${visionStatus}`;
+                    visionText.innerText = `HAWK EYE: ${visionStatus.toUpperCase()}`;
+                }
+
+                // Mic status
+                const micBadge = document.getElementById('status-mic');
+                if (micBadge) {
+                    const micStatus = state.privacy_mode ? 'muted' : (state.mic || 'inactive');
+                    micBadge.className = `badge badge-${micStatus === 'listening' ? 'active' : micStatus === 'muted' ? 'disconnected' : 'active'}`;
+                    micBadge.querySelector('.status-text').innerText = `MIC: ${micStatus.toUpperCase()}`;
+                }
+
+                // CPU e RAM dalla telemetria
+                if (state.telemetria) {
+                    const cpuBadge = document.getElementById('status-cpu');
+                    const ramBadge = document.getElementById('status-ram');
+                    if (cpuBadge) {
+                        const cpu = state.telemetria.cpu_percent || 0;
+                        cpuBadge.className = `badge ${cpu > 80 ? 'badge-healing' : 'badge-active'}`;
+                        cpuBadge.querySelector('.status-text').innerText = `CPU: ${cpu}%`;
+                    }
+                    if (ramBadge) {
+                        const ram = state.telemetria.ram_percent || 0;
+                        ramBadge.className = `badge ${ram > 80 ? 'badge-healing' : 'badge-active'}`;
+                        ramBadge.querySelector('.status-text').innerText = `RAM: ${ram}%`;
+                    }
+                }
+
+                body.classList.remove('theme-listening', 'theme-healing', 'theme-night', 'theme-morning', 'theme-afternoon');
+
+                const hour = new Date().getHours();
+                if (hour >= 22 || hour < 6) body.classList.add('theme-night');
+                else if (hour >= 6 && hour < 12) body.classList.add('theme-morning');
+                else if (hour >= 12 && hour < 18) body.classList.add('theme-afternoon');
+
+                const now = Date.now();
+                if (now > syncLock) {
+                    const hero = document.querySelector('.hero');
+
+                    if (state.mic === 'listening') {
+                        hero.classList.add('hero-listening');
+                        hero.classList.remove('hero-muted', 'status-thinking', 'status-calm', 'status-executing');
+                        body.classList.add('theme-listening');
+                        if (lastMicState !== 'listening') {
+                            lastMicState = 'listening';
+                        }
+                    } else if (state.privacy_mode || state.mic === 'muted') {
+                        hero.classList.add('hero-muted');
+                        hero.classList.remove('hero-listening', 'status-thinking', 'status-calm', 'status-executing');
+                        if (lastMicState !== 'muted') {
+                            lastMicState = 'muted';
+                        }
+                    } else if (hero.dataset.internalStatus === 'thinking') {
+                        hero.classList.add('status-thinking');
+                        body.classList.add('theme-thinking');
+                        hero.classList.remove('hero-listening', 'hero-muted', 'status-calm', 'status-executing');
+                    } else if (hero.dataset.internalStatus === 'executing') {
+                        hero.classList.add('status-executing');
+                        body.classList.add('theme-executing');
+                        hero.classList.remove('hero-listening', 'hero-muted', 'status-calm', 'status-thinking');
+                    } else if (state.last_speech && state.last_speech.trim() !== "") {
+                        // Clio sta parlando
+                        hero.classList.add('status-thinking');
+                        hero.classList.remove('hero-listening', 'hero-muted', 'status-calm', 'status-executing');
+                    } else {
+                        hero.classList.add('status-calm');
+                        hero.classList.remove('hero-listening', 'hero-muted', 'status-thinking', 'status-executing');
+                        if (lastMicState !== 'active') {
+                            lastMicState = 'active';
+                        }
+                    }
+                }
+
+                // Speech Box Logic
+                const speechBox = document.getElementById('speech-box');
+                const speechText = document.getElementById('speech-text');
+                if (state.last_speech && state.last_speech.trim() !== "") {
+                    if (speechText.textContent !== state.last_speech) {
+                        speechText.textContent = state.last_speech;
+                    }
+                    if (!speechBox.classList.contains('active')) {
+                        speechBox.classList.add('active');
+                    }
+                } else {
+                    speechBox.classList.remove('active');
+                }
+
+                if (JSON.stringify(state) !== JSON.stringify(window.lastState)) {
+                    lucide.createIcons();
+                    window.lastState = state;
+                }
+            } catch (err) { }
+        }
+
+        window.stopSpeech = async function () {
+            try {
+                await fetch('/api/speech/stop', { method: 'POST' });
+                document.getElementById('speech-box').classList.remove('active');
+            } catch (err) { }
+        }
+
+        window.toggleMic = async function () {
+            const hero = document.querySelector('.hero');
+            const currentlyMuted = hero.classList.contains('hero-muted');
+            syncLock = Date.now() + 5000;
+
+            if (!currentlyMuted) {
+                hero.classList.add('hero-muted');
+                hero.classList.remove('hero-listening');
+                try {
+                    await fetch('/api/mic/toggle', { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ action: 'mute' }) 
+                    });
+                } catch (err) { }
+            } else {
+                hero.classList.remove('hero-muted');
+                try {
+                    const response = await fetch('/api/mic/toggle', { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ action: 'unmute' }) 
+                    });
+                    const data = await response.json();
+                    if (data.mic === 'listening') hero.classList.add('hero-listening');
+                } catch (err) { }
+            }
+            lucide.createIcons();
+        }
+
+        async function inviaComando() {
+            const inputField = document.getElementById('clio-command');
+            const command = inputField.value.trim();
+            if (!command) return;
+
+            const originalText = command;
+            inputField.value = '';
+            inputField.placeholder = "Elaborazione...";
+            inputField.disabled = true;
+
+            try {
+                const response = await fetch('/api/command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: command })
+                });
+                const data = await response.json();
+
+                if (data.status === 'accepted' && data.task_id) {
+                    addHistoryAction(originalText);
+                    addChatMessage('user', originalText);
+                    pollTaskStatus(data.task_id);
+                } else {
+                    inputField.placeholder = "Errore invio.";
+                    inputField.disabled = false;
+                }
+            } catch (err) {
+                inputField.placeholder = "Errore di connessione.";
+                inputField.disabled = false;
+            }
+        }
+
+        async function pollTaskStatus(taskId) {
+            const inputField = document.getElementById('clio-command');
+            const speechBox = document.getElementById('speech-box');
+            const speechText = document.getElementById('speech-text');
+            const hero = document.querySelector('.hero');
+            
+            hero.dataset.internalStatus = 'thinking';
+            
+            // Anima le wave bar durante l'elaborazione
+            document.querySelectorAll('.wave-bar').forEach(bar => bar.classList.add('thinking'));
+            
+            const poll = async () => {
+                try {
+                    const response = await fetch(`/api/task_status/${taskId}`);
+                    const data = await response.json();
+
+                    if (data.status === 'completed') {
+                        hero.dataset.internalStatus = '';
+                        document.querySelectorAll('.wave-bar').forEach(bar => bar.classList.remove('thinking'));
+                        inputField.disabled = false;
+                        inputField.placeholder = "Invia un comando a Clio...";
+                        
+                        // Mostra risposta
+                        speechText.textContent = data.response;
+                        lastResponse = data.response;
+                        addChatMessage('clio', data.response);
+                        speechBox.classList.add('active');
+                        return; // Fine polling
+                    } else if (data.status === 'error') {
+                        hero.dataset.internalStatus = '';
+                        document.querySelectorAll('.wave-bar').forEach(bar => bar.classList.remove('thinking'));
+                        inputField.disabled = false;
+                        inputField.placeholder = "Errore elaborazione.";
+                        speechText.textContent = "Errore: " + data.response;
+                        speechBox.classList.add('active');
+                        return;
+                    }
+                    
+                    // Se il task sta durando molto, potrebbe essere in esecuzione tool
+                    // (Semplificazione: dopo 3 secondi cambiamo in executing)
+                    // In realtà potremmo avere uno stato più fine dal backend
+                    setTimeout(() => {
+                        if (hero.dataset.internalStatus === 'thinking') {
+                            hero.dataset.internalStatus = 'executing';
+                        }
+                    }, 3000);
+
+                    // Continua a polleare
+                    setTimeout(poll, 1000);
+                } catch (err) {
+                    hero.dataset.internalStatus = '';
+                    inputField.disabled = false;
+                    inputField.placeholder = "Errore di sincronizzazione.";
+                }
+            };
+            
+            poll();
+        }
+
+        function addChatMessage(role, text) {
+            const history = document.getElementById('chat-history');
+            const msg = document.createElement('div');
+            msg.className = `chat-msg chat-msg-${role}`;
+            msg.innerHTML = `
+                <div class="chat-bubble">
+                    <span class="chat-role">${role === 'user' ? 'TU' : 'CLIO'}</span>
+                    <p>${text}</p>
+                </div>`;
+            history.appendChild(msg);
+            history.scrollTop = history.scrollHeight;
+            lucide.createIcons();
+        }
+
+        async function inviaImmagine(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const caption = prompt('Descrizione per Clio (opzionale):', 'Cosa vedi in questa immagine?');
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const base64 = e.target.result.split(',')[1];
+                addChatMessage('user', `[Immagine inviata: ${file.name}]`);
+                try {
+                    const response = await fetch('/api/command', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            text: caption || 'Cosa vedi in questa immagine?',
+                            image_base64: base64,
+                            image_type: file.type
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.task_id) pollTaskStatus(data.task_id);
+                } catch (err) {
+                    addChatMessage('clio', 'Errore invio immagine.');
+                }
+            };
+            reader.readAsDataURL(file);
+            input.value = '';
+        }
+
+        function pinRisposta() {
+            if (!lastResponse) return;
+            const speechBox = document.getElementById('speech-box');
+            const speechText = document.getElementById('speech-text');
+            speechText.textContent = lastResponse;
+            speechBox.classList.add('active');
+        }
+
+        setInterval(aggiornaStati, 1000);
+        aggiornaStati(); // Initial call
+        setInterval(() => {
+            fetch('/api/ping').catch(() => { });
+        }, 15000);
+
+        // Phantom Interface Logic (Adaptive UI)
+        const cmdInput = document.getElementById('clio-command');
+        const heroEl = document.querySelector('.hero');
+        const footerEl = document.querySelector('.conceptual-footer');
+
+        cmdInput.addEventListener('focus', () => {
+            heroEl.classList.add('phantom-mode');
+            footerEl.classList.add('phantom-mode');
+        });
+
+        cmdInput.addEventListener('blur', () => {
+            heroEl.classList.remove('phantom-mode');
+            footerEl.classList.remove('phantom-mode');
+        });
+
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CLIO · Anteprima 3D (C5)</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden;
+               background: #0b0f14; color: #e6edf3;
+               font-family: "Segoe UI", system-ui, sans-serif; }
+  #scena { position: fixed; inset: 0; }
+
+  #hud { position: fixed; top: 16px; left: 16px; padding: 14px 18px;
+         background: rgba(13, 20, 28, .82); border: 1px solid #1f2b38;
+         border-radius: 12px; backdrop-filter: blur(6px); max-width: 340px;
+         font-size: 13px; line-height: 1.5; }
+  #hud h1 { margin: 0 0 6px; font-size: 15px; letter-spacing: .4px; color: #7fd1ff; }
+  #hud .riga { display: flex; justify-content: space-between; gap: 12px;
+               border-bottom: 1px dashed #1b2733; padding: 3px 0; }
+  #hud .riga:last-of-type { border-bottom: 0; }
+  #hud .k { color: #8b9bab; }
+  #hud .v { font-variant-numeric: tabular-nums; color: #e6edf3; }
+  #hud .hint { margin-top: 10px; color: #66788a; font-size: 11.5px; }
+
+  #stato { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+           padding: 10px 16px; border-radius: 10px; font-size: 13px;
+           background: rgba(13, 20, 28, .9); border: 1px solid #1f2b38;
+           max-width: 640px; text-align: center; }
+  #stato.errore { border-color: #7a2b2b; color: #ffb4b4; }
+  #stato.ok { border-color: #1f5138; color: #9be7b4; }
+  #stato code { color: #7fd1ff; }
+</style>
+</head>
+<body>
+  <canvas id="scena"></canvas>
+
+  <div id="hud">
+    <h1>CLIO · Anteprima 3D</h1>
+    <div class="riga"><span class="k">file</span><span class="v" id="h-file">—</span></div>
+    <div class="riga"><span class="k">vertici</span><span class="v" id="h-vertici">—</span></div>
+    <div class="riga"><span class="k">facce</span><span class="v" id="h-facce">—</span></div>
+    <div class="riga"><span class="k">dimensioni</span><span class="v" id="h-misure">—</span></div>
+    <div class="riga"><span class="k">sorgente</span><span class="v" id="h-status">—</span></div>
+    <div class="hint">Trascina per ruotare · rotella per zoom · tasto destro per spostare</div>
+  </div>
+
+  <div id="stato">Carico il modello…</div>
+
+  <script src="lib/three.min.js"></script>
+  <script src="lib/GLTFLoader.js"></script>
+  <script src="lib/OrbitControls.js"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    var stato = document.getElementById("stato");
+    function messaggio(testo, classe) {
+      stato.textContent = testo;
+      stato.className = classe || "";
+    }
+
+    if (typeof THREE === "undefined") {
+      messaggio("Three.js non caricato: manca lib/three.min.js.", "errore");
+      return;
+    }
+
+    // ── Scena ────────────────────────────────────────────────────────────────
+    var canvas = document.getElementById("scena");
+    var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    var scene = new THREE.Scene();
+
+        // --- GRAFO 3D AGGIUNTO ---
+        var graphGroup = new THREE.Group();
+        var nodes = [];
+        for (var i = 0; i < 15; i++) {
+            var geometry = new THREE.SphereGeometry(0.1, 16, 16);
+            var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            var node = new THREE.Mesh(geometry, material);
+            node.position.set((Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5);
+            nodes.push(node);
+            graphGroup.add(node);
+        }
+        for (var i = 0; i < nodes.length - 1; i++) {
+            var points = [nodes[i].position, nodes[i+1].position];
+            var geo = new THREE.BufferGeometry().setFromPoints(points);
+            var mat = new THREE.LineBasicMaterial({ color: 0xffffff });
+            var line = new THREE.Line(geo, mat);
+            graphGroup.add(line);
+        }
+        scene.add(graphGroup);
+        // --- FINE GRAFO ---
+    
+    scene.background = new THREE.Color(0x0b0f14);
+
+    var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.05, 500);
+    camera.position.set(6, 4.5, 7);
+
+    var controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.target.set(2.4, 0.75, 0);
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x203040, 1.1));
+    var sole = new THREE.DirectionalLight(0xffffff, 1.0);
+    sole.position.set(6, 10, 7);
+    scene.add(sole);
+    var riempimento = new THREE.DirectionalLight(0x88bbff, 0.45);
+    riempimento.position.set(-6, 4, -5);
+    scene.add(riempimento);
+
+    // Griglia + assi: danno la scala (1 unità = 1 unità del modello).
+    var griglia = new THREE.GridHelper(20, 20, 0x1f2b38, 0x141c24);
+    scene.add(griglia);
+    scene.add(new THREE.AxesHelper(2));
+
+    // ── Caricamento del modello ─────────────────────────────────────────────
+    // Priorità: l'OBJ generato da CLIO (/3d_models/?file=… oppure "latest"),
+    // poi il GLB statico come fallback. Con file:// il browser blocca tutto.
+    var parametri = new URLSearchParams(window.location.search);
+    var richiesto = parametri.get("file") || "latest";
+    var percorsoOBJ = "/3d_models/" + encodeURIComponent(richiesto);
+
+    function parseOBJ(testo) {
+      var vertici = [], indici = [];
+      var righe = testo.split(/\r?\n/);
+      for (var i = 0; i < righe.length; i++) {
+        var p = righe[i].trim().split(/\s+/);
+        if (p[0] === "v") {
+          vertici.push(parseFloat(p[1]), parseFloat(p[2]), parseFloat(p[3]));
+        } else if (p[0] === "f") {
+          var idx = [];
+          for (var j = 1; j < p.length; j++) {
+            var n = parseInt(p[j].split("/")[0], 10);
+            if (!isNaN(n)) { idx.push(n > 0 ? n - 1 : vertici.length / 3 + n); }
+          }
+          for (var k = 1; k + 1 < idx.length; k++) {
+            indici.push(idx[0], idx[k], idx[k + 1]);
+          }
+        }
+      }
+      if (!vertici.length || !indici.length) { return null; }
+      var posizioni = new Float32Array(indici.length * 3);
+      for (var m = 0; m < indici.length; m++) {
+        var base = indici[m] * 3;
+        posizioni[m * 3] = vertici[base];
+        posizioni[m * 3 + 1] = vertici[base + 1];
+        posizioni[m * 3 + 2] = vertici[base + 2];
+      }
+      var geometria = new THREE.BufferGeometry();
+      geometria.setAttribute("position", new THREE.BufferAttribute(posizioni, 3));
+      geometria.computeVertexNormals();
+      return geometria;
+    }
+
+    function mostraOBJ(testo, percorso) {
+      var geometria = parseOBJ(testo);
+      if (!geometria) { throw new Error("OBJ senza vertici/facce"); }
+      var mesh = new THREE.Mesh(geometria, new THREE.MeshStandardMaterial({
+        color: 0x9fb6c9, metalness: 0.15, roughness: 0.55, side: THREE.DoubleSide
+      }));
+      inquadra(mesh, percorso, geometria.attributes.position.count,
+               geometria.attributes.position.count / 3);
+    }
+
+    function caricaOBJ() {
+      fetch(percorsoOBJ)
+        .then(function (r) {
+          if (!r.ok) { throw new Error("HTTP " + r.status); }
+          return r.text();
+        })
+        .then(function (testo) { mostraOBJ(testo, percorsoOBJ); })
+        .catch(function (e) {
+          messaggio("OBJ non disponibile (" + e.message + "): provo il GLB statico…", "");
+          provaProssima(null);
+        });
+    }
+
+    var sorgenti = ["lib/anteprima.glb", "../data/3d_models/anteprima.glb"];
+    var loader = new THREE.GLTFLoader();
+    var indice = 0;
+
+    function provaProssima(ultimoErrore) {
+      if (indice >= sorgenti.length) {
+        messaggio("Non riesco a caricare il modello (" + (ultimoErrore || "file assente") + "). " +
+                  "Avvia il control plane e apri http://127.0.0.1:5000/3d_preview.html — " +
+                  "con file:// il browser blocca il caricamento.", "errore");
+        return;
+      }
+      var percorso = sorgenti[indice++];
+      loader.load(percorso, function (gltf) { mostra(gltf, percorso); },
+        undefined,
+        function (e) {
+          provaProssima(e && e.message ? e.message : percorso + " non trovato");
+        });
+    }
+
+    function mostra(gltf, percorso) {
+      var modello = gltf.scene;
+      var vertici = 0, facce = 0;
+
+      modello.traverse(function (nodo) {
+        if (!nodo.isMesh || !nodo.geometry) { return; }
+        var g = nodo.geometry;
+        // Il GLB esportato da trimesh non porta normali: senza, il materiale
+        // "standard" resta nero (nessuna luce calcolabile).
+        if (!g.attributes.normal) { g.computeVertexNormals(); }
+        vertici += g.attributes.position ? g.attributes.position.count : 0;
+        facce += g.index ? g.index.count / 3 : (g.attributes.position ? g.attributes.position.count / 3 : 0);
+        // Il GLB di trimesh non porta materiali: un grigio-azzurro con un po' di riflesso.
+        nodo.material = new THREE.MeshStandardMaterial({
+          color: 0x9fb6c9, metalness: 0.15, roughness: 0.55,
+          side: THREE.DoubleSide
+        });
+      });
+
+      inquadra(modello, percorso, vertici, facce);
+    }
+
+    function inquadra(modello, percorso, vertici, facce) {
+      var scatola = new THREE.Box3().setFromObject(modello);
+
+      // Appoggia il modello sul piano z=0 e centra la camera su di lui.
+      var centro = scatola.getCenter(new THREE.Vector3());
+      modello.position.x -= centro.x;
+      modello.position.y -= scatola.min.y;
+      modello.position.z -= centro.z;
+      scene.add(modello);
+
+      var misure = scatola.getSize(new THREE.Vector3());
+      var raggio = Math.max(misure.x, misure.y, misure.z) || 1;
+      controls.target.set(0, misure.y / 2, 0);
+      camera.position.set(raggio * 0.9, misure.y * 0.9 + raggio * 0.45, raggio * 1.1);
+      camera.near = raggio / 100;
+      camera.far = raggio * 100;
+      camera.updateProjectionMatrix();
+      controls.update();
+
+      document.getElementById("h-file").textContent = percorso.split("/").pop();
+      document.getElementById("h-vertici").textContent = vertici.toLocaleString("it-IT");
+      document.getElementById("h-facce").textContent = Math.round(facce).toLocaleString("it-IT");
+      document.getElementById("h-misure").textContent =
+        misure.x.toFixed(2) + " × " + misure.y.toFixed(2) + " × " + misure.z.toFixed(2);
+      document.getElementById("h-status").textContent = percorso;
+      messaggio("Modello caricato: " + (vertici + Math.round(facce) > 0
+        ? "anteprima navigabile (trascina per ruotare)." : "geometria vuota."), "ok");
+    }
+
+    // ── Loop ────────────────────────────────────────────────────────────────
+    window.addEventListener("resize", function () {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    (function anima() {
+      requestAnimationFrame(anima);
+      controls.update();
+      renderer.render(scene, camera);
+    })();
+
+    caricaOBJ();
+  })();
+  </script>
+</body>
+</html>

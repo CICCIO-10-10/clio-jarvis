@@ -1,0 +1,38 @@
+# posthog 4+ rompe la telemetria interna di chromadb 0.5.x (firma capture() cambiata)
+posthog<4
+chromadb==0.5.4
+python-telegram-bot==21.3
+google-genai>=1.0.0
+google-api-python-client>=2.0.0
+google-auth-oauthlib>=1.0.0
+gTTS==2.5.1
+psutil==5.9.8
+flask==3.0.3
+SpeechRecognition>=3.10.0
+pyaudio==0.2.14
+pygame>=2.6.0
+edge-tts>=7.3.1
+groq==1.1.1
+mss==9.0.1
+pyautogui==0.9.54
+requests>=2.31.0
+pygetwindow>=0.0.9
+pyperclip>=1.10.0
+duckduckgo-search==5.3.1
+pillow==10.2.0
+SoundCard==0.4.5
+plyer>=2.1.0
+# C4 (Research Agent): browser headless per DuckDuckGo/YouTube. Nessuna GUI.
+# Dopo l'installazione dei pacchetti serve il browser:
+#   .venv\Scripts\python.exe -m playwright install --only-shell chromium
+playwright>=1.40
+# C5 (2D->3D): generazione OBJ/STL senza Blender. Solo wheel, nessuna compilazione.
+trimesh>=4.0
+
+# --- Test (suite pytest in tests/) ---
+pytest>=8.0
+
+# Nota: the_scribe e' un pacchetto LOCALE del monorepo (../the_scribe), non su PyPI.
+# Installarlo nel venv con:
+#   .venv\Scripts\python.exe -m pip install --no-deps -e ..\the_scribe
+# Senza, 11 test di test_scribe_control.py falliscono con ModuleNotFoundError.

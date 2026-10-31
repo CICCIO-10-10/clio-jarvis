@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clio | Neural Brain 3D</title>
+    <script src="lib/3d-force-graph.min.js"></script>
+    <style>
+        body { margin: 0; background: #050A18; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif; color: white; }
+        #brain-container { width: 100vw; height: 100vh; }
+        
+        /* Overlay per le info del nodo */
+        #info-card {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 300px;
+            background: rgba(5, 10, 24, 0.85);
+            border: 1px solid #00BFFF;
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+            box-shadow: 0 0 20px rgba(0, 191, 255, 0.3);
+        }
+        
+        #info-card.visible { opacity: 1; pointer-events: all; }
+        #info-card h2 { color: #00BFFF; margin-top: 0; font-size: 1.2rem; }
+        #info-card p { font-size: 0.9rem; line-height: 1.4; color: #ccc; }
+        
+        /* Titolo Dashboard Brain */
+        .brain-header {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            pointer-events: none;
+        }
+        .brain-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            border-left: 4px solid #00BFFF;
+            padding-left: 15px;
+            color: #fff;
+        }
+        .brain-status {
+            font-size: 0.8rem;
+            margin-top: 5px;
+            color: #00BFFF;
+            opacity: 0.8;
+            padding-left: 19px;
+            text-transform: uppercase;
+        }
+
+        /* Effetto Scanline e Vignetting */
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 20%, rgba(5, 10, 24, 0.4) 100%);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="brain-container"></div>
+    <div class="overlay"></div>
+    
+    <div class="brain-header">
+        <h1>NEURAL BRAIN</h1>
+        <div class="brain-status">Memoria Episodica | Monitor 3D Attivo</div>
+    </div>
+    
+    <div id="info-card">
+        <h2 id="node-title">Sincronizzazione...</h2>
+        <p id="node-desc">Analisi delle connessioni sinaptiche in corso.</p>
+    </div>
+
+    <script>
+        // --- CONFIGURAZIONE ---
+        // Autenticazione via cookie di sessione HttpOnly (inviato automaticamente).
+        const Graph = ForceGraph3D()(document.getElementById('brain-container'))
+            .backgroundColor('#050A18')
+            .nodeColor(node => node.color || '#00BFFF')
+            .nodeLabel(node => `<span style="color: #00BFFF; font-weight: bold;">${node.name}</span>`)
+            .nodeResolution(24)
+            .nodeVal(node => node.val || 5)
+            .linkColor(() => 'rgba(255, 255, 255, 0.15)')
+            .linkWidth(0.5)
+            .onNodeClick(node => {
+                showInfo(node);
+                // Move camera to node
+                const distance = 80;
+                const distRatio = 1 + distance/Math.hypot(node.x, node.y, node.z);
+                Graph.cameraPosition(
+                    { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio }, 
+                    node, 
+                    2000
+                );
+            });
+
+        // --- ANIMAZIONI ---
+        let angle = 0;
+        setInterval(() => {
+            angle += 0.002;
+            Graph.cameraPosition({
+                x: 200 * Math.sin(angle),
+                z: 200 * Math.cos(angle)
+            });
+        }, 10);
+
+        // Effetto Breathing (pulsazione)
+        let scale = 1.0;
+        let direction = 1;
+        setInterval(() => {
+            scale += 0.005 * direction;
+            if (scale > 1.1) direction = -1;
+            if (scale < 0.9) direction = 1;
+            Graph.nodeRelSize(4 * scale);
+        }, 30);
+
+        // --- GESTIONE DATI ---
+        async function fetchGraph() {
+            try {
+                const response = await fetch('/api/memory_graph');
+                const data = await response.json();
+                Graph.graphData(data);
+            } catch (err) {
+                console.error("Errore recupero mappa mente:", err);
+            }
+        }
+
+        function showInfo(node) {
+            const card = document.getElementById('info-card');
+            document.getElementById('node-title').innerText = node.name;
+            document.getElementById('node-desc').innerText = node.desc || "Nessuna descrizione disponibile.";
+            card.classList.add('visible');
+            setTimeout(() => card.classList.remove('visible'), 8000);
+        }
+
+        // --- INIT ---
+        fetchGraph();
+        setInterval(fetchGraph, 30000); // Polling ogni 30s
+    </script>
+</body>
+</html>

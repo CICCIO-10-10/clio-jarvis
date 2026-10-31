@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C.L.I.O.</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="./clio_logo_official.png">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- THREE.js prima di 3d-force-graph per nodeThreeObject -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/3d-force-graph"></script>
+    <style>
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --cyan:    #00f3ff;
+            --purple:  #a855f7;
+            --magenta: #ec4899;
+            --bg:      #030308;
+            --font-h:  'Outfit', sans-serif;
+            --font-b:  'Plus Jakarta Sans', sans-serif;
+        }
+        body {
+            background: var(--bg);
+            color: #fff;
+            font-family: var(--font-b);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ── MESH BACKGROUND ── */
+        .mesh-container {
+            position: fixed; inset: 0; z-index: 0;
+            overflow: hidden; filter: blur(130px);
+            pointer-events: none;
+        }
+        .mesh-orb { position: absolute; border-radius: 50%; }
+        .mesh-1 { width:60vw; height:60vw; background:radial-gradient(circle,var(--purple),transparent 70%); top:-10%; left:-10%; opacity:0.12; animation:flowMesh 18s infinite ease-in-out; }
+        .mesh-2 { width:55vw; height:55vw; background:radial-gradient(circle,var(--cyan),transparent 70%); bottom:-5%; right:-5%; opacity:0.09; animation:flowMesh 22s infinite ease-in-out reverse; }
+        .mesh-3 { width:45vw; height:45vw; background:radial-gradient(circle,var(--magenta),transparent 70%); top:20%; right:15%; opacity:0.07; animation:flowMesh 30s infinite ease-in-out; }
+        @keyframes flowMesh { 0%,100%{transform:translate(0,0)scale(1)} 50%{transform:translate(40px,30px)scale(1.1)} }
+        .noise-surface { position:fixed; inset:0; z-index:0; opacity:0.025; background-image:url('https://grainy-gradients.vercel.app/noise.svg'); pointer-events:none; }
+
+        /* ── BRAIN ── */
+        #brain-main {
+            position: fixed; inset: 0;
+            width: 100vw; height: 100vh;
+            z-index: 1;
+            transition: opacity 0.8s ease;
+        }
+
+        /* Glow audio-reattivo */
+        #brain-glow {
+            position: fixed; inset: 0; z-index: 2;
+            pointer-events: none; opacity: 0;
+            transition: opacity 0.1s linear;
+            background: radial-gradient(ellipse at center,
+                rgba(0,191,255,0.22) 0%,
+                rgba(168,85,247,0.08) 40%,
+                transparent 70%);
+        }
+
+        /* Ring audio che pulsa attorno al brain */
+        #audio-ring {
+            position: fixed;
+            top: 50%; left: 50%;
+            width: 300px; height: 300px;
+            margin-left: -150px; margin-top: -150px;
+            border-radius: 50%;
+            border: 2px solid rgba(0,191,255,0);
+            box-shadow: none;
+            z-index: 3; pointer-events: none;
+        }
+
+        /* Stato audio browser — pill in basso a sinistra sopra recall */
+        #audio-status {
+            position: fixed; bottom: 148px; left: 26px; z-index: 60;
+            display: flex; align-items: center; gap: 7px;
+            background: rgba(5,5,18,0.82);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px; padding: 5px 12px;
+            font-size: 0.6rem; letter-spacing: 1.5px; text-transform: uppercase;
+            color: rgba(255,255,255,0.3);
+            backdrop-filter: blur(12px);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        #audio-status.audio-on  { color:var(--cyan); border-color:rgba(0,243,255,0.35); box-shadow:0 0 8px rgba(0,243,255,0.15); }
+        #audio-status.clio-on   { color:#4ade80;     border-color:rgba(74,222,128,0.35); box-shadow:0 0 8px rgba(74,222,128,0.15); }
+        #audio-status-dot { width:5px; height:5px; border-radius:50%; background:currentColor; }
+        #audio-status.audio-on  #audio-status-dot { animation:blink 1.2s infinite; }
+        #audio-status.clio-on   #audio-status-dot { animation:blink 0.6s infinite; }
+
+        /* Hint permesso mic */
+        #mic-hint {
+            position: fixed; bottom: 100px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 60;
+            background: rgba(5,5,18,0.9);
+            border: 1px solid rgba(0,191,255,0.35);
+            border-radius: 14px; padding: 12px 20px;
+            font-size: 0.75rem; letter-spacing: 1px;
+            color: rgba(0,191,255,0.8);
+            backdrop-filter: blur(16px);
+            display: flex; align-items: center; gap: 10px;
+            cursor: pointer;
+            animation: hintFade 0.5s ease;
+            box-shadow: 0 0 20px rgba(0,191,255,0.12);
+        }
+        #mic-hint.hidden { display: none; }
+        #mic-hint-dot { width:6px; height:6px; border-radius:50%; background:#00BFFF; box-shadow:0 0 8px #00BFFF; animation:blink 1.5s infinite; }
+        @keyframes hintFade { from{opacity:0;transform:translateX(-50%)translateY(10px)} to{opacity:1;transform:translateX(-50%)translateY(0)} }
+
+        /* ── CORNER LOGO ── */
+        .corner-logo {
+            position: fixed; top: 20px; left: 24px; z-index: 50;
+            display: flex; align-items: center; gap: 12px;
+            cursor: pointer;
+        }
+        .corner-logo img {
+            width: 42px; height: 42px; border-radius: 50%;
+            filter: drop-shadow(0 0 10px rgba(168,85,247,0.8));
+            transition: filter 0.3s ease, transform 0.3s ease;
+        }
+        body.brain-listening .corner-logo img {
+            filter: drop-shadow(0 0 16px rgba(0,191,255,1));
+            animation: logoPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes logoPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+        .logo-text { font-family:var(--font-h); font-size:1.05rem; font-weight:800; letter-spacing:4px; background:linear-gradient(to right,#fff,rgba(255,255,255,0.45)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+        .logo-acronym { margin-top:5px; display:flex; flex-direction:column; gap:2px; }
+        .logo-acronym-row { font-size:0.5rem; letter-spacing:1.5px; line-height:1.3; color:rgba(255,255,255,0.35); text-transform:uppercase; }
+        .logo-acronym-row b { color:var(--cyan); font-weight:800; letter-spacing:2px; }
+
+        /* ── STATUS BADGES ── */
+        .status-strip {
+            position: fixed; top: 18px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 50; display: flex; gap: 6px;
+        }
+        .badge {
+            display: flex; align-items: center; gap: 5px;
+            padding: 5px 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(168,85,247,0.14);
+            border-radius: 20px; font-size: 0.62rem;
+            font-weight: 600; letter-spacing: 0.8px;
+            color: rgba(255,255,255,0.45);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(14px);
+            white-space: nowrap;
+        }
+        .badge i { width: 11px; height: 11px; flex-shrink: 0; }
+        .badge-active      { color:var(--cyan)!important; border-color:rgba(0,243,255,0.32)!important; box-shadow:0 0 7px rgba(0,243,255,0.12); }
+        .badge-disconnected,
+        .badge-inactive    { opacity: 0.38; }
+        .badge-healing     { color:#ffb800!important; border-color:rgba(255,184,0,0.32)!important; }
+        #status-brain      { cursor:pointer; }
+
+        /* ── BRAIN LIVE LABEL ── */
+        .brain-corner {
+            position: fixed; top: 22px; right: 22px; z-index: 50;
+            display: flex; align-items: center; gap: 7px;
+            font-family: var(--font-h); font-size: 0.62rem; letter-spacing: 2px;
+            color: rgba(0,191,255,0.5); pointer-events: none;
+        }
+        .brain-corner-dot {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: #00BFFF; box-shadow: 0 0 6px #00BFFF;
+            animation: blink 2.5s ease-in-out infinite;
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.15} }
+
+        /* ── INTERACTION DOCK ── */
+        .interaction-dock {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            padding: 0 20px 26px;
+            display: flex; flex-direction: column; align-items: center;
+            z-index: 40; pointer-events: none;
+        }
+        .interaction-dock > * { pointer-events: auto; width: 100%; max-width: 760px; }
+
+        .speech-overlay {
+            background: rgba(4,4,14,0.88);
+            backdrop-filter: blur(26px);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 20px; padding: 16px 20px;
+            display: flex; flex-direction: column; gap: 10px;
+            opacity: 0; visibility: hidden;
+            transform: translateY(8px) scale(0.98);
+            transition: all 0.4s cubic-bezier(0.19,1,0.22,1);
+            margin-bottom: 10px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+        }
+        .speech-overlay.active { opacity:1!important; visibility:visible!important; transform:translateY(0)scale(1); }
+        .speech-header { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.04); padding-bottom:9px; }
+        .clio-indicator { color:var(--magenta); font-size:8px; font-weight:900; letter-spacing:2.5px; text-transform:uppercase; display:flex; align-items:center; gap:7px; }
+        .clio-indicator::before { content:''; width:5px; height:5px; background:var(--magenta); border-radius:50%; box-shadow:0 0 8px var(--magenta); animation:blink 2s infinite; }
+        .skip-btn { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); color:rgba(255,255,255,0.45); padding:5px 12px; border-radius:9px; font-size:10px; font-weight:700; display:flex; align-items:center; gap:7px; cursor:pointer; transition:all 0.3s ease; }
+        .skip-btn:hover { background:rgba(236,72,153,0.1); border-color:var(--magenta); color:#fff; }
+        .speech-content { font-size:14px; line-height:1.7; color:rgba(255,255,255,0.88); max-height:180px; overflow-y:auto; scrollbar-width:none; }
+        .speech-content::-webkit-scrollbar { display:none; }
+
+        .chat-history { max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:7px; padding:0 2px; margin-bottom:8px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.07) transparent; }
+        .chat-msg { display:flex; }
+        .chat-msg-user { justify-content:flex-end; }
+        .chat-msg-clio { justify-content:flex-start; }
+        .chat-bubble { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:9px 15px; max-width:75%; backdrop-filter:blur(8px); }
+        .chat-msg-user .chat-bubble { background:rgba(236,72,153,0.1); border-color:rgba(236,72,153,0.22); }
+        .chat-msg-clio .chat-bubble { background:rgba(0,243,255,0.05); border-color:rgba(0,243,255,0.16); }
+        .chat-role { font-size:8px; font-weight:800; letter-spacing:2px; opacity:0.4; display:block; margin-bottom:4px; }
+        .chat-msg-user .chat-role { color:var(--magenta); }
+        .chat-msg-clio .chat-role { color:var(--cyan); }
+        .chat-bubble p { font-size:13px; line-height:1.5; color:rgba(255,255,255,0.86); }
+
+        .command-center { width:100%; }
+        .input-container {
+            background: rgba(8,8,20,0.88);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 30px; padding: 7px 9px 7px 22px;
+            display: flex; align-items: center; gap: 9px;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.65);
+        }
+        .input-container:focus-within { border-color:var(--cyan); box-shadow:0 0 28px rgba(0,243,255,0.1),0 10px 50px rgba(0,0,0,0.7); transform:translateY(-2px); }
+        #clio-command { background:none; border:none; color:#fff; flex-grow:1; height:44px; font-size:15px; font-family:var(--font-b); outline:none; }
+        #clio-command::placeholder { color:rgba(255,255,255,0.25); }
+        .input-actions { display:flex; gap:7px; }
+        .action-btn, .send-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.07); color:rgba(255,255,255,0.45); width:44px; height:44px; border-radius:22px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.3s ease; }
+        .action-btn:hover { background:rgba(0,243,255,0.08); color:var(--cyan); transform:scale(1.05); }
+        .send-btn { background:var(--magenta); color:#fff; border:none; box-shadow:0 4px 14px rgba(236,72,153,0.3); }
+        .send-btn:hover { transform:scale(1.08); box-shadow:0 6px 20px rgba(236,72,153,0.5); }
+        .send-btn i, .action-btn i { width:17px; height:17px; }
+        /* mic attivo */
+        .action-btn.mic-active { background:rgba(0,243,255,0.2)!important; color:var(--cyan)!important; border-color:var(--cyan)!important; box-shadow:0 0 18px rgba(0,243,255,0.5); animation:micPulse 1s ease-in-out infinite; }
+        @keyframes micPulse { 0%,100%{box-shadow:0 0 12px rgba(0,243,255,0.4);} 50%{box-shadow:0 0 28px rgba(0,243,255,0.8), 0 0 50px rgba(0,243,255,0.3);} }
+
+        .action-history-ghost { position:fixed; right:26px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:10px; z-index:50; pointer-events:none; }
+        .history-item { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); padding:7px 14px; border-radius:10px; backdrop-filter:blur(8px); font-size:10px; color:rgba(255,255,255,0.42); display:flex; align-items:center; gap:7px; animation:slideInRight 0.4s ease forwards,fadeOut 3s ease forwards 5s; }
+        .history-item i { color:var(--cyan); width:11px; height:11px; }
+        @keyframes slideInRight { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes fadeOut { to{opacity:0;transform:translateY(-8px)} }
+
+        .recall-btn { position:fixed; bottom:88px; left:26px; width:42px; height:42px; border-radius:50%; background:rgba(168,85,247,0.15); border:1px solid rgba(168,85,247,0.3); color:var(--purple); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.3s ease; z-index:50; }
+        .recall-btn:hover { background:rgba(168,85,247,0.3); transform:scale(1.1); box-shadow:0 0 14px rgba(168,85,247,0.3); }
+        .recall-btn i { width:17px; height:17px; }
+
+        #brain-info-card { position:fixed; bottom:106px; right:22px; width:245px; z-index:50; background:rgba(4,6,18,0.92); border:1px solid rgba(0,191,255,0.3); border-radius:12px; padding:13px 15px; backdrop-filter:blur(16px); opacity:0; transform:translateY(10px); transition:opacity .4s,transform .4s; pointer-events:none; box-shadow:0 0 18px rgba(0,191,255,0.1); }
+        #brain-info-card.visible { opacity:1; transform:translateY(0); }
+        #brain-info-card h3 { color:#00BFFF; margin:0 0 5px; font-size:.82rem; font-family:var(--font-h); }
+        #brain-info-card p  { color:rgba(255,255,255,0.62); font-size:.71rem; line-height:1.5; margin:0; }
+
+        /* ── LIVE CLOCK ── */
+        #clock-widget { position:fixed; top:14px; right:22px; z-index:50; text-align:right; pointer-events:none; }
+        #clock-time { font-family:var(--font-h); font-size:1.35rem; font-weight:800; background:linear-gradient(to right,var(--cyan),rgba(255,255,255,0.7)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:3px; }
+        #clock-date { font-size:0.52rem; color:rgba(255,255,255,0.28); letter-spacing:1.5px; text-transform:uppercase; margin-top:1px; }
+
+        /* ── TOAST NOTIFICATIONS ── */
+        #toast-container { position:fixed; top:72px; right:22px; z-index:200; display:flex; flex-direction:column; gap:8px; pointer-events:none; width:280px; }
+        .toast { background:rgba(4,8,20,0.96); border:1px solid rgba(0,243,255,0.3); border-radius:12px; padding:11px 15px; backdrop-filter:blur(24px); opacity:0; transform:translateX(20px); transition:all 0.45s cubic-bezier(0.19,1,0.22,1); box-shadow:0 0 24px rgba(0,243,255,0.08); pointer-events:auto; }
+        .toast.visible { opacity:1; transform:translateX(0); }
+        .toast-label { font-size:8px; letter-spacing:2px; color:var(--cyan); font-weight:800; margin-bottom:4px; text-transform:uppercase; }
+        .toast p { font-size:11.5px; line-height:1.5; color:rgba(255,255,255,0.85); margin:0; }
+        .toast-security { border-color:rgba(255,80,80,0.5); box-shadow:0 0 20px rgba(255,80,80,0.1); }
+        .toast-security .toast-label { color:#ff5050; }
+
+        /* ── QUICK ACTIONS ── */
+        .quick-actions { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding:2px 0 4px; }
+        .quick-actions::-webkit-scrollbar { display:none; }
+        .quick-pill { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:18px; padding:5px 13px; white-space:nowrap; font-size:11px; color:rgba(255,255,255,0.5); cursor:pointer; transition:all 0.22s ease; backdrop-filter:blur(10px); display:flex; align-items:center; gap:5px; flex-shrink:0; user-select:none; }
+        .quick-pill:hover { background:rgba(0,243,255,0.09); border-color:rgba(0,243,255,0.3); color:var(--cyan); transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,243,255,0.1); }
+        .quick-pill:active { transform:translateY(0); }
+
+        /* ── VISION PANEL ── */
+        #vision-panel { position:fixed; bottom:370px; right:22px; width:220px; z-index:50; background:rgba(3,5,16,0.94); border:1px solid rgba(0,191,255,0.22); border-radius:14px; overflow:hidden; backdrop-filter:blur(20px); box-shadow:0 0 22px rgba(0,191,255,0.08); display:none; animation:fadeInUp 0.4s ease; }
+        #vision-panel.open { display:block; }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        #vision-panel img { width:100%; display:block; opacity:0.88; border-bottom:1px solid rgba(0,191,255,0.12); }
+        #vision-panel-header { padding:8px 11px; display:flex; align-items:center; justify-content:space-between; }
+        #vision-panel-label { font-size:8px; letter-spacing:2px; color:rgba(0,191,255,0.65); text-transform:uppercase; font-weight:800; }
+        #vision-age { font-size:8px; color:rgba(255,255,255,0.25); }
+        #vision-desc { padding:0 11px 10px; font-size:10px; line-height:1.5; color:rgba(255,255,255,0.48); max-height:70px; overflow:hidden; }
+        #vision-btn { position:fixed; bottom:370px; right:255px; z-index:51; width:34px; height:34px; background:rgba(0,191,255,0.08); border:1px solid rgba(0,191,255,0.22); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.3s; color:rgba(0,191,255,0.55); }
+        #vision-btn:hover { background:rgba(0,191,255,0.2); color:var(--cyan); box-shadow:0 0 12px rgba(0,191,255,0.2); }
+        #vision-btn i { width:14px; height:14px; }
+        #vision-btn.active { background:rgba(0,191,255,0.2); color:var(--cyan); border-color:var(--cyan); }
+
+        /* ── TYPEWRITER cursor ── */
+        .typewriter-cursor { display:inline-block; width:2px; height:1em; background:var(--cyan); margin-left:2px; vertical-align:text-bottom; animation:blink 0.8s infinite; }
+    </style>
+</head>
+<body>
+
+    <div class="mesh-container">
+        <div class="mesh-orb mesh-1"></div>
+        <div class="mesh-orb mesh-2"></div>
+        <div class="mesh-orb mesh-3"></div>
+    </div>
+    <div class="noise-surface"></div>
+
+    <!-- Brain hero -->
+    <div id="brain-main"></div>
+    <div id="brain-glow"></div>
+    <div id="audio-ring"></div>
+
+    <!-- Hint permesso mic -->
+    <div id="mic-hint" onclick="initAudio()">
+        <div id="mic-hint-dot"></div>
+        CLICCA PER ATTIVARE REATTIVITÀ VOCALE
+    </div>
+
+    <!-- Stato audio pill -->
+    <div id="audio-status" onclick="initAudio()" title="Stato microfono browser">
+        <div id="audio-status-dot"></div>
+        <span id="audio-status-text">AUDIO OFF</span>
+    </div>
+
+    <!-- Logo angolo alto sinistra -->
+    <div class="corner-logo" onclick="toggleMic()">
+        <img src="clio_logo_official.png" alt="CLIO">
+        <div>
+            <div class="logo-text">CLIO</div>
+            <div class="logo-acronym">
+                <div class="logo-acronym-row"><b>C</b>ognitive</div>
+                <div class="logo-acronym-row"><b>L</b>ink for</div>
+                <div class="logo-acronym-row"><b>I</b>dea</div>
+                <div class="logo-acronym-row"><b>O</b>ptimization</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status badges -->
+    <div class="status-strip">
+        <div id="status-mic"    class="badge"><i data-lucide="mic"></i><span class="status-text">MIC: --</span></div>
+        <div id="status-adb"    class="badge"><i data-lucide="smartphone"></i><span class="status-text">ADB: --</span></div>
+        <div id="status-vision" class="badge"><i data-lucide="eye"></i><span class="status-text">HAWK EYE: --</span></div>
+        <div id="status-cpu"    class="badge"><i data-lucide="cpu"></i><span class="status-text">CPU: --%</span></div>
+        <div id="status-ram"    class="badge"><i data-lucide="memory-stick"></i><span class="status-text">RAM: --%</span></div>
+        <div id="status-brain"  class="badge badge-active" onclick="toggleBrainLevel()" title="Intensità">
+            <i data-lucide="brain-circuit"></i><span class="status-text">BRAIN: ON</span>
+        </div>
+        <div id="status-battery" class="badge">
+            <i data-lucide="battery"></i><span class="status-text">BATT: --%</span>
+        </div>
+        <div id="status-voice" class="badge badge-active" onclick="toggleVoiceGender()" title="Cambia voce M/F" style="cursor:pointer">
+            <i data-lucide="volume-2"></i><span class="status-text">♀ ISABELLA</span>
+        </div>
+    </div>
+
+    <!-- Live Clock -->
+    <div id="clock-widget">
+        <div id="clock-time">00:00:00</div>
+        <div id="clock-date">CARICAMENTO...</div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <!-- Vision Panel -->
+    <div id="vision-btn" onclick="toggleVisionPanel()" title="Vision Panel"><i data-lucide="eye"></i></div>
+    <div id="vision-panel">
+        <div id="vision-panel-header">
+            <span id="vision-panel-label">👁 HAWK EYE</span>
+            <span id="vision-age">—</span>
+        </div>
+        <img id="vision-img" src="" alt="Vision" style="display:none">
+        <div id="vision-desc">In attesa di visione...</div>
+    </div>
+
+    <div class="action-history-ghost" id="ghost-history"></div>
+
+    <div id="brain-info-card">
+        <h3 id="brain-node-title">—</h3>
+        <p  id="brain-node-desc">Connessione sinaptica attiva.</p>
+    </div>
+
+    <!-- Interaction dock -->
+    <div class="interaction-dock">
+        <!-- Quick Actions Pills -->
+        <div class="quick-actions" id="quick-actions"></div>
+        <div class="chat-history" id="chat-history"></div>
+        <div class="speech-overlay" id="speech-box">
+            <div class="speech-header">
+                <span class="clio-indicator">CLIO RISPONDE</span>
+                <div style="display:flex;gap:7px">
+                    <button class="skip-btn" onclick="pinRisposta()"><i data-lucide="pin"></i></button>
+                    <button class="skip-btn" onclick="stopSpeech()"><i data-lucide="square"></i><span>SKIP</span></button>
+                </div>
+            </div>
+            <div class="speech-content" id="speech-text"></div>
+        </div>
+        <section class="command-center">
+            <div class="input-container">
+                <input type="text" id="clio-command" placeholder="Scrivi un comando per Clio..." onkeydown="if(event.key==='Enter')inviaComando()">
+                <div class="input-actions">
+                    <input type="file" id="img-upload" accept="image/*" style="display:none" onchange="inviaImmagine(this)">
+                    <button class="action-btn" onclick="document.getElementById('img-upload').click()"><i data-lucide="image"></i></button>
+                    <button class="action-btn" id="mic-btn" onclick="toggleMic()"><i data-lucide="mic"></i></button>
+                    <button onclick="inviaComando()" class="send-btn"><i data-lucide="send"></i></button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <button class="recall-btn" onclick="pinRisposta()"><i data-lucide="message-circle"></i></button>
+
+    <script src="/api/config.js"></script>
+    <script>
+    // ══════════════════════════════════════════════════════════
+    //  GLOBALS
+    // ══════════════════════════════════════════════════════════
+    let syncLock = 0;          // Blocca setBrainVoice da aggiornaStati per N ms dopo azione locale
+    let lastResponse = '';     // Ultima risposta Clio (per pin)
+    let _chatHistoryIds = new Set(); // Tracking messaggi già renderizzati
+
+    const APIKEY = () => typeof CLIO_API_KEY !== 'undefined' ? CLIO_API_KEY : 'Cl10_S3cur3_K3y_C0rt3x_2026';
+
+    // ══════════════════════════════════════════════════════════
+    //  AUDIO ENGINE — Web Audio API reattivo in tempo reale
+    // ══════════════════════════════════════════════════════════
+    let audioAnalyser = null, audioData = null, audioCtx = null;
+    let audioLevel = 0; // 0-1 smoothed
+
+    window.initAudio = async function() {
+        const hint = document.getElementById('mic-hint');
+        if(audioAnalyser) { hint.classList.add('hidden'); return; }
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({audio:true, video:false});
+            audioCtx    = new (window.AudioContext || window.webkitAudioContext)();
+            audioAnalyser = audioCtx.createAnalyser();
+            audioAnalyser.fftSize = 64;
+            audioAnalyser.smoothingTimeConstant = 0.75;
+            audioData   = new Uint8Array(audioAnalyser.frequencyBinCount);
+            const src   = audioCtx.createMediaStreamSource(stream);
+            src.connect(audioAnalyser);
+            hint.classList.add('hidden');
+            startAudioLoop();
+        } catch(e) {
+            hint.textContent = '⚠ Permesso microfono negato';
+            setTimeout(() => hint.classList.add('hidden'), 3000);
+        }
+    };
+
+    function getRawLevel() {
+        if(!audioAnalyser) return 0;
+        audioAnalyser.getByteFrequencyData(audioData);
+        let sum = 0;
+        for(let i = 0; i < audioData.length; i++) sum += audioData[i];
+        return (sum / audioData.length) / 128; // 0-2
+    }
+
+    function startAudioLoop() {
+        const glow   = document.getElementById('brain-glow');
+        const ring   = document.getElementById('audio-ring');
+        const asPill = document.getElementById('audio-status');
+        const asTxt  = document.getElementById('audio-status-text');
+        let prevLevel = 0;
+
+        // Aggiorna pill: AUDIO ON
+        asPill.classList.add('audio-on');
+        asTxt.textContent = 'AUDIO ON';
+
+        function tick() {
+            const raw = getRawLevel();
+            audioLevel = raw > prevLevel
+                ? raw * 0.6  + prevLevel * 0.4   // attack rapido
+                : raw * 0.05 + prevLevel * 0.95; // decay lento
+            prevLevel = audioLevel;
+
+            const lvl = Math.min(audioLevel, 1);
+
+            // Glow overlay
+            glow.style.opacity = (lvl * 0.85).toFixed(3);
+
+            // Ring: scala attorno al centro via transform (nessun conflitto CSS)
+            const s = 1 + lvl * 1.4;
+            const alpha = lvl * 0.75;
+            ring.style.transform   = `scale(${s.toFixed(3)})`;
+            ring.style.borderColor = `rgba(0,191,255,${alpha.toFixed(3)})`;
+            ring.style.borderWidth = (1.5 + lvl * 2).toFixed(1) + 'px';
+            ring.style.boxShadow   = alpha > 0.05
+                ? `0 0 ${(lvl*50).toFixed(0)}px rgba(0,191,255,${(alpha*0.6).toFixed(3)})`
+                : 'none';
+
+            requestAnimationFrame(tick);
+        }
+        tick();
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  BRAIN — 3D Force Graph con illuminazione ciano custom
+    // ══════════════════════════════════════════════════════════
+    (function(){
+        const KEY = typeof CLIO_API_KEY!=='undefined' ? CLIO_API_KEY : 'Cl10_S3cur3_K3y_C0rt3x_2026';
+
+        const G = ForceGraph3D({rendererConfig:{alpha:true, antialias:true}})(document.getElementById('brain-main'))
+            .backgroundColor('rgba(0,0,0,0)')
+            .nodeThreeObject(n => {
+                const col = n.color || '#00BFFF';
+                const radius = Math.cbrt(n.val || 5) * 3.5;
+                const mesh = new THREE.Mesh(
+                    new THREE.SphereGeometry(radius, 18, 18),
+                    new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.92 })
+                );
+                // Glow sprite sovrapposto
+                const spriteMat = new THREE.SpriteMaterial({
+                    color: col, transparent: true, opacity: 0.18,
+                    depthWrite: false, blending: THREE.AdditiveBlending
+                });
+                const sprite = new THREE.Sprite(spriteMat);
+                sprite.scale.set(radius * 5, radius * 5, 1);
+                mesh.add(sprite);
+                return mesh;
+            })
+            .nodeThreeObjectExtend(false)
+            .nodeLabel(n => `<span style="color:#00BFFF;font-family:Outfit,sans-serif;font-weight:700;font-size:12px">${n.name}</span>`)
+            .linkColor(() => 'rgba(0,191,255,0.2)')
+            .linkWidth(0.6)
+            .linkOpacity(0.6)
+            .onNodeClick(n => {
+                document.getElementById('brain-node-title').innerText = n.name || '—';
+                document.getElementById('brain-node-desc').innerText  = n.desc || 'Connessione sinaptica attiva.';
+                const c = document.getElementById('brain-info-card');
+                c.classList.add('visible');
+                setTimeout(() => c.classList.remove('visible'), 7000);
+            });
+
+        // ── Sostituisci luci default (bianche) con luci ciano ──
+        const scene = G.scene();
+        // Rimuovi tutte le luci di default aggiunte da 3d-force-graph
+        scene.children.filter(c => c.isLight).forEach(l => scene.remove(l));
+        // Luce ambiente buia (non lava i colori)
+        scene.add(new THREE.AmbientLight(0x000818, 2));
+        // Point light ciano al centro — illumina le sfere di blu/ciano
+        const cyanLight = new THREE.PointLight(0x00BFFF, 12, 700);
+        cyanLight.position.set(0, 0, 0);
+        scene.add(cyanLight);
+        // Soft fill da dietro per profondità
+        const fillLight = new THREE.PointLight(0x4400ff, 3, 500);
+        fillLight.position.set(-150, 100, -200);
+        scene.add(fillLight);
+
+        // ── Rotazione camera — accelera con audio ──
+        let angle = 0, baseRotSpeed = 0.0015;
+        setInterval(() => {
+            const lvl = Math.min(audioLevel, 1);
+            angle += baseRotSpeed + lvl * 0.008;
+            G.cameraPosition({x: 220*Math.sin(angle), z: 220*Math.cos(angle)});
+        }, 16);
+
+        // ── Breathing — scala i nodi custom con audio ──
+        let sc = 1, dir = 1, baseBreath = 0.003;
+        setInterval(() => {
+            const lvl = Math.min(audioLevel, 1);
+            const speed = baseBreath + lvl * 0.022;
+            const maxS  = 1.08 + lvl * 0.55;
+            const minS  = 0.92 - lvl * 0.12;
+            sc += speed * dir;
+            if(sc > maxS) dir = -1;
+            if(sc < minS) dir = 1;
+            // Scala i mesh custom (MeshBasicMaterial — nodeRelSize non ha effetto)
+            try {
+                G.scene().traverse(obj => {
+                    if(obj.isMesh && obj.material && obj.material.isMeshBasicMaterial && !obj.isSprite) {
+                        obj.scale.setScalar(sc);
+                    }
+                });
+            } catch(e) {}
+        }, 30);
+
+        // ── Point light intensity pulsa con voce ──
+        setInterval(() => {
+            const lvl = Math.min(audioLevel, 1);
+            cyanLight.intensity = 12 + lvl * 20;
+        }, 50);
+
+        // ── API voice state ──
+        window._brainSetListening = function(on) {
+            baseRotSpeed = on ? 0.005  : 0.0015;
+            baseBreath   = on ? 0.009  : 0.003;
+        };
+
+        // Fetch memory graph
+        async function fb() {
+            try {
+                const r = await fetch('/api/memory_graph', {headers:{'X-Clio-Key': KEY}});
+                const d = await r.json();
+                G.graphData({nodes: d.nodes||[], links: d.links||[]});
+            } catch(e) {}
+        }
+        fb(); setInterval(fb, 30000);
+    })();
+
+    // Brain toggle livelli
+    let brainLvl = 0;
+    const brainOps = [1, 0.45, 0], brainTxt = ['BRAIN: ON','BRAIN: DIM','BRAIN: OFF'];
+    function toggleBrainLevel() {
+        brainLvl = (brainLvl+1) % 3;
+        document.getElementById('brain-main').style.opacity = brainOps[brainLvl];
+        document.querySelector('#status-brain .status-text').innerText = brainTxt[brainLvl];
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  HUB — Comunicazione con Clio
+    // ══════════════════════════════════════════════════════════
+
+    // Voice gender toggle
+    async function toggleVoiceGender() {
+        const badge = document.getElementById('status-voice');
+        const txt   = badge.querySelector('.status-text');
+        try {
+            const r = await fetch('/api/voice/toggle', {
+                method: 'POST',
+                headers: {'X-Clio-Key': APIKEY(), 'Content-Type': 'application/json'}
+            });
+            if (!r.ok) {
+                console.error('Voice toggle HTTP error:', r.status, await r.text());
+                txt.innerText = '⚠ ERR ' + r.status;
+                return;
+            }
+            const d = await r.json();
+            if(d.gender === 'male') {
+                txt.innerText = '♂ DIEGO';
+                badge.style.borderColor = 'rgba(168,85,247,0.45)';
+                badge.style.color = '#a855f7';
+            } else {
+                txt.innerText = '♀ ISABELLA';
+                badge.style.borderColor = '';
+                badge.style.color = '';
+            }
+        } catch(e) {
+            console.error('Voice toggle error:', e);
+            txt.innerText = '⚠ ERRORE';
+        }
+    }
+
+    function setBrainVoice(on) {
+        document.body.classList.toggle('brain-listening', on);
+        if(window._brainSetListening) window._brainSetListening(on);
+        // Mic button
+        const mb = document.getElementById('mic-btn');
+        if(mb) mb.classList.toggle('mic-active', on);
+        // Audio status pill
+        const pill = document.getElementById('audio-status');
+        const txt  = document.getElementById('audio-status-text');
+        if(on) {
+            pill.classList.remove('audio-on'); pill.classList.add('clio-on');
+            txt.textContent = 'CLIO ASCOLTA';
+        } else if(audioAnalyser) {
+            pill.classList.remove('clio-on'); pill.classList.add('audio-on');
+            txt.textContent = 'AUDIO ON';
+        } else {
+            pill.classList.remove('clio-on','audio-on');
+            txt.textContent = 'AUDIO OFF';
+        }
+    }
+
+    function addHistoryAction(t) {
+        const g = document.getElementById('ghost-history'), i = document.createElement('div');
+        i.className = 'history-item';
+        i.innerHTML = `<i data-lucide="send"></i><span>${t}</span>`;
+        g.appendChild(i); lucide.createIcons();
+        setTimeout(() => i.remove(), 8000);
+    }
+
+    async function aggiornaStati() {
+        try {
+            const s = await (await fetch('/api/status', {headers:{'X-Clio-Key':APIKEY()}})).json();
+            if('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+
+            const upd = (id, st, pfx) => {
+                const b = document.getElementById(id);
+                if(b){ b.className=`badge badge-${st}`; b.querySelector('.status-text').innerText=`${pfx}: ${st.toUpperCase()}`; }
+            };
+            upd('status-adb',    s.adb    || 'disconnected', 'ADB');
+            upd('status-vision', s.vision || 'inactive',     'HAWK EYE');
+
+            const ms = s.privacy_mode ? 'muted' : (s.mic || 'inactive');
+            const mb = document.getElementById('status-mic');
+            if(mb){ mb.className=`badge badge-${ms==='listening'?'active':ms==='muted'?'disconnected':'inactive'}`; mb.querySelector('.status-text').innerText=`MIC: ${ms.toUpperCase()}`; }
+
+            if(Date.now() > syncLock) setBrainVoice(ms === 'listening');
+
+            if(s.telemetria) {
+                const cpu = s.telemetria.cpu_percent||0, ram = s.telemetria.ram_percent||0;
+                const batt = s.telemetria.battery_percent;
+                const plugged = s.telemetria.power_plugged;
+                const cb = document.getElementById('status-cpu'), rb = document.getElementById('status-ram');
+                if(cb){ cb.className=`badge ${cpu>80?'badge-healing':'badge-active'}`; cb.querySelector('.status-text').innerText=`CPU: ${cpu}%`; }
+                if(rb){ rb.className=`badge ${ram>80?'badge-healing':'badge-active'}`; rb.querySelector('.status-text').innerText=`RAM: ${ram}%`; }
+                // Batteria
+                const bb = document.getElementById('status-battery');
+                if(bb && batt !== undefined) {
+                    const cls = batt < 15 ? 'badge-healing' : batt < 50 ? 'badge-inactive' : 'badge-active';
+                    const icon = plugged ? '⚡' : (batt < 20 ? '🔴' : '🔋');
+                    bb.className = `badge ${cls}`;
+                    bb.querySelector('.status-text').innerText = `${icon} BATT: ${batt}%`;
+                }
+            }
+
+            const sb = document.getElementById('speech-box'), st = document.getElementById('speech-text');
+            if(s.last_speech && s.last_speech.trim()) {
+                const newSpeech = s.last_speech;
+                if(st.dataset.lastSpeech !== newSpeech) {
+                    st.dataset.lastSpeech = newSpeech;
+                    typewriterEffect(st, newSpeech, 18);
+                }
+                sb.classList.add('active');
+            } else {
+                sb.classList.remove('active');
+            }
+
+            // Mostra toast per notifiche proattive di Clio
+            if(s.notifications && s.notifications.length > 0) {
+                s.notifications.forEach(n => showToast(n.text, n.type || 'proactive'));
+            }
+
+            lucide.createIcons();
+        } catch(e) {}
+    }
+
+    // ── Carica cronologia chat dal server (persistente tra refresh) ──
+    async function loadChatHistory() {
+        try {
+            const r = await fetch('/api/chat_history?limit=20', {headers:{'X-Clio-Key':APIKEY()}});
+            if(!r.ok) return;
+            const d = await r.json();
+            const msgs = d.history || [];
+            msgs.forEach(m => {
+                const key = m.ts + m.role + m.text.slice(0,20);
+                if(!_chatHistoryIds.has(key)) {
+                    _chatHistoryIds.add(key);
+                    _renderChatMsg(m.role, m.text, m.ts);
+                }
+            });
+        } catch(e) {}
+    }
+
+    function _renderChatMsg(role, text, ts='') {
+        const h = document.getElementById('chat-history');
+        const m = document.createElement('div');
+        m.className = `chat-msg chat-msg-${role}`;
+        const label = role === 'user' ? 'TU' : 'CLIO';
+        const tsStr = ts ? `<span style="font-size:9px;opacity:0.3;margin-left:6px">${ts}</span>` : '';
+        m.innerHTML = `<div class="chat-bubble"><span class="chat-role">${label}${tsStr}</span><p>${text}</p></div>`;
+        h.appendChild(m);
+        h.scrollTop = h.scrollHeight;
+    }
+
+    window.stopSpeech = async () => {
+        try { await fetch('/api/speech/stop',{method:'POST',headers:{'X-Clio-Key':APIKEY()}}); document.getElementById('speech-box').classList.remove('active'); } catch(e) {}
+    };
+
+    // ── PUSH-TO-TALK (Web Speech API) ──────────────────────────
+    let _ptt = null;       // SpeechRecognition instance
+    let _pttActive = false;
+
+    function _pttInit() {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) { alert('Speech Recognition non supportato. Usa Chrome.'); return null; }
+        const r = new SR();
+        r.lang = 'it-IT';
+        r.continuous = false;
+        r.interimResults = true;
+
+        const inp = document.getElementById('clio-command');
+        const btn = document.getElementById('mic-btn');
+        const statusEl = document.querySelector('#audio-status');
+
+        r.onstart = () => {
+            _pttActive = true;
+            setBrainVoice(true);
+            if(btn) btn.classList.add('mic-active');
+            if(statusEl) { statusEl.textContent = 'CLIO ASCOLTA'; statusEl.style.color = '#00ff88'; }
+            inp.placeholder = '🎙 Sto ascoltando...';
+        };
+
+        r.onresult = (e) => {
+            const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
+            inp.value = transcript;
+            if (e.results[e.results.length - 1].isFinal) {
+                r._finalTranscript = transcript;
+            }
+        };
+
+        r.onend = async () => {
+            _pttActive = false;
+            setBrainVoice(false);
+            if(btn) btn.classList.remove('mic-active');
+            if(statusEl) { statusEl.textContent = 'AUDIO ON'; statusEl.style.color = ''; }
+            const testo = inp.value.trim();
+            if (testo) {
+                await _pttInviaComando(testo);
+            } else {
+                inp.placeholder = 'Scrivi un comando per Clio...';
+            }
+        };
+
+        r.onerror = (e) => {
+            _pttActive = false;
+            setBrainVoice(false);
+            if(btn) btn.classList.remove('mic-active');
+            console.warn('Speech error:', e.error);
+            inp.placeholder = e.error === 'no-speech' ? 'Niente captato, riprova.' : 'Errore microfono: ' + e.error;
+            inp.value = '';
+        };
+
+        return r;
+    }
+
+    async function _pttInviaComando(cmd) {
+        const inp = document.getElementById('clio-command');
+        inp.value = ''; inp.placeholder = 'Elaborazione...'; inp.disabled = true;
+        addChatMessage('user', cmd);
+        try {
+            const r = await fetch('/api/command', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json','X-Clio-Key': APIKEY()},
+                body: JSON.stringify({text: cmd})
+            });
+            const d = await r.json();
+            if (d.status === 'accepted' && d.task_id) pollTaskStatus(d.task_id);
+            else { inp.placeholder = 'Errore invio.'; inp.disabled = false; }
+        } catch(e) { inp.placeholder = 'Errore di connessione.'; inp.disabled = false; }
+    }
+
+    window.toggleMic = async () => {
+        if(!audioAnalyser) await initAudio();
+
+        if (_pttActive) {
+            // Secondo click: ferma ascolto
+            if (_ptt) _ptt.stop();
+            return;
+        }
+
+        // Primo click: avvia ascolto
+        if (!_ptt) _ptt = _pttInit();
+        if (!_ptt) return;
+        try { _ptt.start(); } catch(e) { console.error(e); }
+    };
+
+    async function inviaComando() {
+        const inp = document.getElementById('clio-command'), cmd = inp.value.trim();
+        if(!cmd) return;
+        const orig = cmd; inp.value=''; inp.placeholder='Elaborazione...'; inp.disabled=true;
+        try {
+            const r = await fetch('/api/command',{method:'POST',headers:{'Content-Type':'application/json','X-Clio-Key':APIKEY()},body:JSON.stringify({text:cmd})});
+            const d = await r.json();
+            if(d.status==='accepted' && d.task_id) { addHistoryAction(orig); addChatMessage('user',orig); pollTaskStatus(d.task_id); }
+            else { inp.placeholder='Errore invio.'; inp.disabled=false; }
+        } catch(e) { inp.placeholder='Errore di connessione.'; inp.disabled=false; }
+    }
+
+    async function pollTaskStatus(tid) {
+        const inp = document.getElementById('clio-command');
+        const sb = document.getElementById('speech-box');
+        const st = document.getElementById('speech-text');
+        setBrainVoice(true);
+        syncLock = Date.now() + 30000; // Blocca override da status poll per 30s
+
+        // Animazione "Clio elabora..."
+        let dots = 0;
+        const thinkInterval = setInterval(() => {
+            dots = (dots + 1) % 4;
+            inp.placeholder = 'Clio elabora' + '.'.repeat(dots + 1);
+        }, 400);
+
+        const poll = async () => {
+            try {
+                const r = await fetch(`/api/task_status/${tid}`,{headers:{'X-Clio-Key':APIKEY()}});
+                const d = await r.json();
+                if(d.status==='completed' || d.status==='error') {
+                    clearInterval(thinkInterval);
+                    setBrainVoice(false);
+                    syncLock = 0;
+                    inp.disabled=false; inp.placeholder='Scrivi un comando per Clio...';
+                    const txt = d.response || (d.status==='error'?'Errore nel completare il task.':'');
+                    st.textContent=txt; lastResponse=txt;
+                    addChatMessage('clio', txt);
+                    sb.classList.add('active');
+                    return;
+                }
+                setTimeout(poll, 800);
+            } catch(e) {
+                clearInterval(thinkInterval);
+                setBrainVoice(false);
+                syncLock = 0;
+                inp.disabled=false;
+                inp.placeholder='Errore di connessione.';
+            }
+        };
+        poll();
+    }
+
+    function addChatMessage(role, text) {
+        const now = new Date().toLocaleTimeString('it-IT', {hour:'2-digit',minute:'2-digit'});
+        const key = now + role + text.slice(0,20);
+        if(_chatHistoryIds.has(key)) return; // Evita duplicati
+        _chatHistoryIds.add(key);
+        _renderChatMsg(role, text, now);
+        lucide.createIcons();
+    }
+
+    async function inviaImmagine(input) {
+        const file = input.files[0]; if(!file) return;
+        const cap = prompt('Descrizione per Clio:','Cosa vedi in questa immagine?');
+        const reader = new FileReader();
+        reader.onload = async e => {
+            const b64 = e.target.result.split(',')[1]; addChatMessage('user',`[Immagine: ${file.name}]`);
+            try { const r=await fetch('/api/command',{method:'POST',headers:{'Content-Type':'application/json','X-Clio-Key':APIKEY()},body:JSON.stringify({text:cap||'Cosa vedi?',image_base64:b64,image_type:file.type})}); const d=await r.json(); if(d.task_id) pollTaskStatus(d.task_id); }
+            catch(e) { addChatMessage('clio','Errore invio immagine.'); }
+        };
+        reader.readAsDataURL(file); input.value='';
+    }
+
+    function pinRisposta() {
+        if(!lastResponse) return;
+        document.getElementById('speech-text').textContent = lastResponse;
+        document.getElementById('speech-box').classList.add('active');
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  LIVE CLOCK
+    // ══════════════════════════════════════════════════════════
+    function updateClock() {
+        const now = new Date();
+        const t = now.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+        const d = now.toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+        document.getElementById('clock-time').textContent = t;
+        document.getElementById('clock-date').textContent = d.toUpperCase();
+    }
+    setInterval(updateClock, 1000); updateClock();
+
+    // ══════════════════════════════════════════════════════════
+    //  TOAST NOTIFICATIONS
+    // ══════════════════════════════════════════════════════════
+    function showToast(text, type='proactive') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        const label = type === 'security' ? '🚨 ALERT SICUREZZA' : '🔔 CLIO DICE';
+        toast.className = `toast${type === 'security' ? ' toast-security' : ''}`;
+        toast.innerHTML = `<div class="toast-label">${label}</div><p>${text}</p>`;
+        toast.onclick = () => toast.remove();
+        container.appendChild(toast);
+        requestAnimationFrame(() => { requestAnimationFrame(() => toast.classList.add('visible')); });
+        setTimeout(() => {
+            toast.classList.remove('visible');
+            setTimeout(() => { if(toast.parentNode) toast.remove(); }, 500);
+        }, 8000);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  QUICK ACTIONS
+    // ══════════════════════════════════════════════════════════
+    const QUICK_ACTIONS_DEF = [
+        { e: '☀️', l: 'Briefing',    c: '__briefing__' },
+        { e: '📰', l: 'Notizie',     c: 'Dammi le ultime notizie ANSA' },
+        { e: '⛅', l: 'Meteo',       c: 'Com\'è il meteo oggi?' },
+        { e: '💻', l: 'Stato PC',    c: 'Dimmi CPU, RAM e stato del PC' },
+        { e: '📧', l: 'Email',       c: 'Leggi le mie ultime email' },
+        { e: '📅', l: 'Agenda',      c: 'Cosa ho in agenda oggi?' },
+        { e: '🎵', l: 'Play/Pausa',  c: 'play pausa musica' },
+        { e: '🔇', l: 'Muta',        c: 'muta il volume' },
+        { e: '📸', l: 'Screenshot',  c: 'fai screenshot e dimmi cosa vedi' },
+        { e: '🔒', l: 'Blocca PC',   c: 'blocca il pc' },
+    ];
+
+    function initQuickActions() {
+        const container = document.getElementById('quick-actions');
+        QUICK_ACTIONS_DEF.forEach(qa => {
+            const pill = document.createElement('div');
+            pill.className = 'quick-pill';
+            pill.innerHTML = `<span>${qa.e}</span><span>${qa.l}</span>`;
+            pill.onclick = () => quickAction(qa.c, qa.l);
+            container.appendChild(pill);
+        });
+    }
+
+    async function quickAction(cmd, label) {
+        if(cmd === '__briefing__') { await loadBriefing(); return; }
+        // Usa quick_command (risposta immediata) per azioni fast
+        addChatMessage('user', cmd);
+        addHistoryAction(label);
+        const inp = document.getElementById('clio-command');
+        inp.disabled = true; inp.placeholder = `${label}...`;
+        try {
+            const r = await fetch('/api/quick_command', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json','X-Clio-Key':APIKEY()},
+                body: JSON.stringify({cmd})
+            });
+            const d = await r.json();
+            inp.disabled = false; inp.placeholder = 'Scrivi un comando per Clio...';
+            if(d.response) {
+                addChatMessage('clio', d.response);
+                typewriterEffect(document.getElementById('speech-text'), d.response);
+                document.getElementById('speech-box').classList.add('active');
+                lastResponse = d.response;
+            }
+        } catch(e) {
+            inp.disabled = false; inp.placeholder = 'Errore connessione.';
+        }
+    }
+
+    async function loadBriefing() {
+        const inp = document.getElementById('clio-command');
+        inp.placeholder = 'Caricamento briefing...';
+        try {
+            const r = await fetch('/api/briefing', {headers:{'X-Clio-Key':APIKEY()}});
+            const d = await r.json();
+            const txt = d.briefing || 'Briefing non disponibile.';
+            addChatMessage('clio', txt);
+            typewriterEffect(document.getElementById('speech-text'), txt);
+            document.getElementById('speech-box').classList.add('active');
+            lastResponse = txt;
+        } catch(e) {}
+        inp.placeholder = 'Scrivi un comando per Clio...';
+    }
+
+    initQuickActions();
+
+    // ══════════════════════════════════════════════════════════
+    //  TYPEWRITER EFFECT
+    // ══════════════════════════════════════════════════════════
+    let _twTimer = null;
+    function typewriterEffect(el, text, speed = 16) {
+        if(_twTimer) clearInterval(_twTimer);
+        el.innerHTML = '';
+        const cursor = document.createElement('span');
+        cursor.className = 'typewriter-cursor';
+        el.appendChild(cursor);
+        let i = 0;
+        _twTimer = setInterval(() => {
+            if(i < text.length) {
+                el.insertBefore(document.createTextNode(text[i++]), cursor);
+                el.parentElement.scrollTop = el.parentElement.scrollHeight;
+            } else {
+                clearInterval(_twTimer); _twTimer = null;
+                cursor.style.display = 'none'; // Rimuovi cursore a fine testo
+            }
+        }, speed);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  VISION PANEL
+    // ══════════════════════════════════════════════════════════
+    let _visionOpen = false;
+
+    function toggleVisionPanel() {
+        _visionOpen = !_visionOpen;
+        const panel = document.getElementById('vision-panel');
+        const btn = document.getElementById('vision-btn');
+        panel.classList.toggle('open', _visionOpen);
+        btn.classList.toggle('active', _visionOpen);
+        if(_visionOpen) refreshVision();
+    }
+
+    async function refreshVision() {
+        if(!_visionOpen) return;
+        try {
+            const r = await fetch('/api/vision', {headers:{'X-Clio-Key':APIKEY()}});
+            const d = await r.json();
+            const img = document.getElementById('vision-img');
+            const desc = document.getElementById('vision-desc');
+            const age = document.getElementById('vision-age');
+            if(d.vision) {
+                img.src = 'data:image/png;base64,' + d.vision;
+                img.style.display = 'block';
+            }
+            if(d.desc) desc.textContent = d.desc.slice(0, 180);
+            if(d.age >= 0) age.textContent = d.age < 60 ? `${d.age}s fa` : `${Math.floor(d.age/60)}m fa`;
+        } catch(e) {}
+    }
+    setInterval(() => { if(_visionOpen) refreshVision(); }, 10000);
+
+    // ══════════════════════════════════════════════════════════
+    //  KEYBOARD SHORTCUTS (JARVIS-style)
+    // ══════════════════════════════════════════════════════════
+    document.addEventListener('keydown', e => {
+        const tag = document.activeElement.tagName;
+        const inInput = tag === 'INPUT' || tag === 'TEXTAREA';
+
+        // Spazio → toggle microfono push-to-talk
+        if(e.code === 'Space' && !inInput) {
+            e.preventDefault();
+            toggleMic();
+        }
+        // Escape → stop parlato
+        if(e.code === 'Escape') {
+            stopSpeech();
+            if(_pttActive && _ptt) _ptt.stop();
+        }
+        // Ctrl+K → focus input
+        if(e.ctrlKey && e.key === 'k') {
+            e.preventDefault();
+            document.getElementById('clio-command').focus();
+        }
+    });
+
+    // ══════════════════════════════════════════════════════════
+    //  AVVIO
+    // ══════════════════════════════════════════════════════════
+    setInterval(aggiornaStati, 3000); aggiornaStati();
+    setInterval(() => { fetch('/api/ping',{headers:{'X-Clio-Key':APIKEY()}}).catch(()=>{}); }, 15000);
+
+    // Carica chat history dal server (sopravvive ai refresh)
+    loadChatHistory();
+
+    // Risync chat ogni 5s per catturare messaggi vocali dal wakeword loop
+    setInterval(async () => {
+        try {
+            const r = await fetch('/api/chat_history?limit=30', {headers:{'X-Clio-Key':APIKEY()}});
+            if(!r.ok) return;
+            const d = await r.json();
+            (d.history||[]).forEach(m => {
+                const key = m.ts + m.role + m.text.slice(0,20);
+                if(!_chatHistoryIds.has(key)) {
+                    _chatHistoryIds.add(key);
+                    _renderChatMsg(m.role, m.text, m.ts);
+                }
+            });
+        } catch(e) {}
+    }, 5000);
+    lucide.createIcons();
+    </script>
+</body>
+</html>

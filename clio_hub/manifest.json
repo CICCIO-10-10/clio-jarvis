@@ -1,0 +1,16 @@
+{
+    "name": "Clio Hub",
+    "short_name": "Clio Hub",
+    "start_url": "index.html",
+    "display": "standalone",
+    "background_color": "#0a0a0f",
+    "theme_color": "#00d2ff",
+    "description": "C.L.I.O. Cognitive Symbiosis Hub",
+    "icons": [
+        {
+            "src": "clio_logo_official.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
